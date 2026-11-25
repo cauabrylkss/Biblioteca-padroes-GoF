@@ -163,7 +163,7 @@ Subclasses: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante` (pré-r
 `CadastroDeAtendente` (idem). `TratadorDeAcervo implements iLivro`, `TratadorDePessoa implements iPessoa`, etc. delegam
 `inserir*` ao cadastro correspondente.
 
-## R8 — Abstract Factory
+## R8 — Abstract Factory  🟨 família em memória implementada (`persistencia`, `persistencia.memoria`); relacional na Fase 3
 | Papel | Classe |
 |---|---|
 | AbstractFactory | `FabricaDePersistencia { UnidadeDeTrabalho unidadeDeTrabalho(); RepositorioDeLivros livros(); RepositorioDeMovimentacao movimentacao(); RepositorioDeRelacionamento relacionamento(); }` |
@@ -176,6 +176,12 @@ Subclasses: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante` (pré-r
   `UnidadeDeTrabalhoJdbc` no construtor (tipo concreto, construtor package-private) → impossível misturar famílias.
 - UoW JDBC com conexão **preguiçosa**: o teste de produção (R08) verifica tipos e a UoW compartilhada sem precisar de MySQL rodando.
 - Oracle: não existe repositório/conexão de escrita para ele (só documentado como réplica).
+- Implementado (memória): a fábrica também cria o `RepositorioDeMultas` (fora da transação de circulação — a multa
+  nasce no ouvinte, após o commit). `UnidadeDeTrabalhoEmMemoria`: ao `iniciar`, cada `TabelaEmMemoria` tira uma foto
+  do mapa; `desfazer` restaura, `confirmar` descarta; uma `ReentrantLock` única serializa transações e operações
+  avulsas. Os repositórios guardam **records imutáveis** e devolvem objetos novos (como um banco): o estado do
+  livro é gravado como `SituacaoLivro` e reconstituído por `Livro.reconstituir`. Perfil: `teste`/`memoria` →
+  `FabricaEmMemoria`; `producao` → `UnsupportedOperationException` até a Fase 3.
 
 ## R9 — Decorator
 | Papel | Classe |

@@ -68,7 +68,7 @@ Coluna **Fonte**: PDF · UML (diagrama) · ❓ (nenhum dos dois — vale a recom
 | B-20 | E-mail | Usado para **enviar boleto** e **notificar quitação**. Implementação simulada (log/arquivo), com falha configurável para demonstrar R5 | UML (uso) + ❓ (implementação) | ✅ |
 | B-21 | Indicadores | Recomendação: total de devoluções, devoluções atrasadas, dias de atraso acumulados, multas emitidas | ❓ | 🟢 |
 | B-22 | Chave de duplicidade | **Livro: `id` informado no cadastro** (sequência "Manter": `consultarLivro(livro.idLivro)` antes de inserir) — sem ISBN. **Pessoa: CPF** (PDF R7). **Estudante/Atendente:** pessoa que já tem o papel | UML sequência + PDF R7 | ✅ |
-| B-23 | Validação de CPF | Recomendação: formato (11 dígitos) + dígitos verificadores | ❓ | 🟠 Fase 2 |
+| B-23 | Validação de CPF | **Formato (11 dígitos, aceita pontuação) + dígitos verificadores**; CPF com todos os dígitos iguais é recusado (`rh.Cpf`) | Implementação Fase 2 | ✅ |
 | B-24 | Geração de IDs | **Livro: informado pelo administrador** (B-22). Pessoa, papéis e transações: `long` sequencial. Solicitações (R6): UUID | UML + recomendação | ✅ |
 | B-25 | Autenticação | **Sem login** — a UML só tem os atores Estudante, Atendente e Administrador; a CLI pergunta "operar como" e o operador vira o `autor` das solicitações (R6) | UML casos de uso | ✅ |
 | B-26 | Atendente obrigatório | Sim: `realizarEmprestimo(idLivro, idEstudante, idAtendente)`, `registrarDevolucao(idLivro, idEstudante, idAtendente)` | UML (interfaces) | ✅ |
@@ -86,7 +86,7 @@ Aplicadas conforme a recomendação; a equipe só precisa se manifestar se disco
 | C-04 | Registro de ids executados | Em memória (`ConcurrentHashMap`); limitação citada na arguição |
 | C-05 | Observer | Síncrono, sequencial, `try/catch` por ouvinte, publicado após o commit |
 | C-06 | Ordem dos ouvintes | inspeção → multa → indicadores → e-mail (resultado não depende da ordem) |
-| C-07 | UoW em memória | Rollback real (alterações aplicadas só no commit) |
+| C-07 | UoW em memória | Rollback real: foto dos dados ao iniciar, restaurada ao desfazer; repositórios guardam/devolvem cópias; trava única serializa as transações |
 | C-08 | Árvore do acervo (R10) | Só em memória (montada no seed) |
 | C-09 | Cadeia de decoradores | Configurável por `.properties`; ordem fixa Medição(Cache(Padrão)) |
 | C-10 | Cache | Sem expiração; invalidado em `atualizarLivro`/`excluirLivro` |
