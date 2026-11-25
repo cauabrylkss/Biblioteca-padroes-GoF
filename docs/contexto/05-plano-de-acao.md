@@ -38,7 +38,7 @@ Cada item = classes + teste `Rxx_` verde.
 - [x] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
 - [x] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente` (11 testes).
 - [x] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando (7 testes).
-- [ ] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit.
+- [x] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit (6 testes).
 - [ ] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada).
 
 ## Fase 3 — Integrações e produção (qui 26/11 manhã)

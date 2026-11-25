@@ -23,8 +23,10 @@ import java.util.Optional;
  * <p>Papel GoF: <b>Client</b> do Adapter (R3) — emite o boleto e recebe notificações de pagamento apenas pelo
  * contrato {@link ServicoDeCobranca}. Não importa nada do pacote {@code banco} e não tem {@code if} por banco: o
  * adaptador do banco da instalação é escolhido no composition root.
+ *
+ * <p>Realiza {@link iMulta}, a interface que o Financeiro oferece à Biblioteca (usada pelo ouvinte de multa, R5).
  */
-public class ServicoDeMultas {
+public class ServicoDeMultas implements iMulta {
 
     private final ConfiguracaoAdministrativa configuracao;
     private final RepositorioDeMultas multas;
@@ -49,6 +51,7 @@ public class ServicoDeMultas {
      *
      * @return a multa emitida (já com id e boleto), ou vazio quando não há atraso ou a política não cobra esses dias
      */
+    @Override
     public Optional<Multa> emitirSeHouverAtraso(long idEmprestimo, long idEstudante,
                                                 LocalDate vencimento, LocalDate dataDevolucao) {
         long dias = DiasDeAtraso.entre(vencimento, dataDevolucao);
@@ -93,6 +96,11 @@ public class ServicoDeMultas {
 
     public List<Multa> multasDoEstudante(long idEstudante) {
         return multas.listarDoEstudante(idEstudante);
+    }
+
+    @Override
+    public Optional<Multa> multaDoEmprestimo(long idEmprestimo) {
+        return multas.buscarPorEmprestimo(idEmprestimo);
     }
 
     private void emitirBoleto(Multa multa) {

@@ -154,7 +154,8 @@ class R04FacadeTest {
         final Movimentacao movimentacao = new Movimentacao(fabrica.movimentacao());
         final Acervo acervo = new Acervo(livros, new OrganizacaoDoAcervo());
         final FachadaDeCirculacao fachada = new FachadaDeCirculacao(relacionamento, movimentacao, acervo,
-                fabrica.unidadeDeTrabalho(), RelogioAjustavel.em(CenarioDeTeste.HOJE), 30);
+                fabrica.unidadeDeTrabalho(), new PublicadorDeDevolucao(), new FilaDeInspecao(),
+                RelogioAjustavel.em(CenarioDeTeste.HOJE), 30);
         final long estudante;
         final long atendente;
 
