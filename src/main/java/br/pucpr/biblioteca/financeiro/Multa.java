@@ -40,6 +40,19 @@ public class Multa {
         this.estado = EstadoMulta.EMITIDA;
     }
 
+    /**
+     * Recria uma multa já gravada (usado pelo repositório relacional, R8): valor, política e situação vêm do banco
+     * exatamente como foram gravados na emissão.
+     */
+    public static Multa reconstituir(long id, long idEmprestimo, long idEstudante, long diasDeAtraso, BigDecimal valor,
+                                     String codigoPolitica, LocalDate dataEmissao, EstadoMulta estado, Boleto boleto) {
+        Multa multa = new Multa(idEmprestimo, idEstudante, diasDeAtraso, valor, codigoPolitica, dataEmissao);
+        multa.id = id;
+        multa.estado = Objects.requireNonNull(estado, "estado");
+        multa.boleto = boleto;
+        return multa;
+    }
+
     public Long getId() {
         return id;
     }

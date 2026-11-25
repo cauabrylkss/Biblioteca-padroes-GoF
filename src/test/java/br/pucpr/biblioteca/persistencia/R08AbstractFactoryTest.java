@@ -8,6 +8,7 @@ import br.pucpr.biblioteca.biblioteca.livro.SituacaoLivro;
 import br.pucpr.biblioteca.biblioteca.movimentacao.Reserva;
 import br.pucpr.biblioteca.config.Aplicacao;
 import br.pucpr.biblioteca.config.PerfilDeExecucao;
+import br.pucpr.biblioteca.persistencia.jdbc.FabricaRelacional;
 import br.pucpr.biblioteca.persistencia.memoria.FabricaEmMemoria;
 import br.pucpr.biblioteca.rh.Pessoa;
 import java.time.Clock;
@@ -17,10 +18,15 @@ import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
-/** R8 — Abstract Factory: famílias compatíveis de acesso aos dados (parte em memória; a relacional entra na Fase 3). */
+/**
+ * R8 — Abstract Factory: famílias compatíveis de acesso aos dados. Nada aqui precisa de MySQL: a família relacional é
+ * conferida pelos tipos e pela unidade compartilhada (conexão preguiçosa). O uso real do MySQL está em
+ * {@code R08MySqlIntegracaoTest} ({@code mvnw test -Pmysql}).
+ */
 class R08AbstractFactoryTest {
 
     private static final String PACOTE_MEMORIA = "br.pucpr.biblioteca.persistencia.memoria";
+    private static final String PACOTE_JDBC = "br.pucpr.biblioteca.persistencia.jdbc";
     private static final String CPF_ANA = "123.456.789-09";
 
     // ---------------------------------------------------------------------------------------------
@@ -44,6 +50,27 @@ class R08AbstractFactoryTest {
         // todos os repositórios da família usam a mesma unidade de trabalho, criada pela fábrica
         assertThat(((FabricaEmMemoria) fabrica).repositoriosCompartilhamAUnidade()).isTrue();
         assertThat(fabrica.unidadeDeTrabalho()).isSameAs(fabrica.unidadeDeTrabalho());
+    }
+
+    @Test
+    void R08_perfilProducaoRepositoriosMysqlMesmaUnidade() {
+        Properties configuracao = Aplicacao.carregarPropriedades();
+        configuracao.setProperty("perfil", "producao");
+        Aplicacao app = Aplicacao.montar(configuracao, Clock.systemDefaultZone());
+        FabricaDePersistencia fabrica = app.fabrica();
+
+        assertThat(app.perfil()).isEqualTo(PerfilDeExecucao.PRODUCAO);
+        assertThat(fabrica).isInstanceOf(FabricaRelacional.class);
+        List<Object> produtos = List.of(fabrica.unidadeDeTrabalho(), fabrica.livros(), fabrica.movimentacao(),
+                fabrica.relacionamento(), fabrica.multas());
+        assertThat(produtos).allSatisfy(produto ->
+                assertThat(produto.getClass().getPackageName()).isEqualTo(PACOTE_JDBC));
+
+        // a mesma unidade de trabalho (= a mesma conexão/transação) em todos os repositórios da família
+        FabricaRelacional relacional = (FabricaRelacional) fabrica;
+        assertThat(relacional.repositoriosCompartilhamAUnidade()).isTrue();
+        // montar a aplicação inteira não conectou no banco: a conexão é aberta só no primeiro uso
+        assertThat(relacional.conexaoAberta()).isFalse();
     }
 
     // ---------------------------------------------------------------------------------------------

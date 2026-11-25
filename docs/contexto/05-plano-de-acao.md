@@ -23,7 +23,7 @@ JDK 25, diagramas de classes relevados (PR1).
 - [x] Definir `JAVA_HOME` (E-02). [x] Instalar MySQL (D-05).
 - [x] Gerar projeto Maven (`pom.xml`, JUnit 5, AssertJ, mysql-connector-j, shade → `target/biblioteca.jar`, exec) + **Maven Wrapper**; `./mvnw test` verde (`FundacaoTest`).
 - [x] Estrutura de pacotes de `04-arquitetura-alvo.md` (com `package-info.java`), `application.properties`, `docs/mysql/criar-banco.sql`, README. *(`schema.sql` movido para a Fase 3, junto da família JDBC.)*
-- [x] Branch `fase0/fundacao`. [ ] Commit/PR para `main` (aguardando pedido da equipe).
+- [x] Branch `fase0/fundacao`. [x] Commit/PR para `main`.
 - [x] Fechar as decisões 🔴 de `06-decisoes.md`.
 
 ## Fase 1 — Núcleo do domínio (qua 25/11 manhã) · padrões sem dependências
@@ -40,13 +40,13 @@ Cada item = classes + teste `Rxx_` verde.
 - [x] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando (7 testes).
 - [x] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit (6 testes).
 - [x] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada) (6 testes).
-- [x] Commits em branches empilhadas por padrão: `r08-abstract-factory` → `r07-template-method` → `r04-facade` → `r05-observer` → `r06-command`. [ ] Push + PRs.
+- [x] Commits em branches empilhadas por padrão: `r08-abstract-factory` → `r07-template-method` → `r04-facade` → `r05-observer` → `r06-command`. [x] Push + PRs (mesclados na `main`, PRs #6–#10).
 
 ## Fase 3 — Integrações e produção (qui 26/11 manhã)
 - [x] **R3 Adapter**: `BancoAApi`, `BancoBApi` (simulados), `ServicoDeCobranca`, `AdaptadorBancoA/B`, quitação idempotente (branch `r03-adapter`, 8 testes; adiantado para depois do R2 por dependência).
 - [ ] **R9 Decorator**: `ConsultaAcervo`, `ConsultaAcervoPadrao`, `ConsultaComMedicao`, `ConsultaComCache`, `Medidor`.
-- [ ] **R8 (relacional)**: `FabricaRelacional`, `UnidadeDeTrabalhoJdbc` (conexão preguiçosa, transação única), repositórios JDBC, gravação/reconstituição do estado do Livro.
-- [ ] **CLI**: menu que chama **só tratadores**; roteiro do fluxo da demo (reserva → empréstimo → renovação → devolução atrasada → multa), com relógio ajustável (`Clock` injetado) para simular atraso.
+- [x] **R8 (relacional)**: `FabricaRelacional`, `UnidadeDeTrabalhoJdbc` (conexão preguiçosa, transação única), repositórios JDBC (incl. multas), `schema.sql`, gravação/reconstituição do estado do Livro (branch `r08-relacional`; 1 teste no `mvnw test` + 4 de integração em `mvnw test -Pmysql`, rodados contra o MySQL local). *Feito antes do R9 porque a demo roda em MySQL (D-09).*
+- [ ] **CLI**: perfil padrão `producao` (D-09) + `--perfil=memoria`; dados de exemplo só com banco vazio + `--reiniciar-dados` (D-10); numeração do banco simulado (D-12); menu que chama **só tratadores**; roteiro do fluxo da demo (reserva → empréstimo → renovação → devolução atrasada → multa), com relógio ajustável (`Clock` injetado) para simular atraso.
 - [ ] `./mvnw test` → todos os `Rxx_` verdes. Rodar contra MySQL real ao menos uma vez.
 
 ## Fase 4 — UML no Astah (qua 25 → qui 26, **em paralelo** com o código, 1–2 pessoas)
@@ -92,6 +92,6 @@ Regra: todo PR revisado por outra pessoa, que precisa conseguir explicar o códi
 |---|---|
 | Prazo curto | Fases 1–2 primeiro (cobrem 7 padrões e a maior parte da nota); MySQL real por último. |
 | Relevo verbal PR1 não reconhecido na correção (PDF exige diagramas de classes) | Citado no README (equipe optou por não pedir confirmação escrita). |
-| MySQL indisponível na máquina da demo | Família relacional testada via tipos/UoW sem conexão (R08); demo roda em perfil memória se preciso. |
+| MySQL indisponível na máquina da demo (demo em MySQL, D-09) | Ensaiar na máquina da demo com `--reiniciar-dados`; família relacional testada via tipos/UoW sem conexão (R08); plano B: `--perfil=memoria`. |
 | Divergência código × UML | Nomes de métodos idênticos; rodar `extrair.sh` e comparar antes de exportar PDF. |
 | Integrante não sabe explicar parte do código | Revisão cruzada obrigatória + sessão de treino na quinta à noite. |

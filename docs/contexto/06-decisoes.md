@@ -100,12 +100,13 @@ Aplicadas conforme a recomendação; a equipe só precisa se manifestar se disco
 ## D. Persistência / MySQL
 | ID | Decisão | Recomendação | Quando |
 |---|---|---|---|
-| D-06 | Criação do schema | A aplicação executa `schema.sql` (`CREATE TABLE IF NOT EXISTS`) ao subir no perfil produção | 🟠 Fase 3 |
-| D-07 | Conexão | `application.properties` + variáveis de ambiente `BIBLIOTECA_DB_URL/USUARIO/SENHA`; senha fora do Git. Banco `biblioteca` e usuário próprio criados por um script SQL que a equipe executa uma vez no Workbench | 🟠 Fase 3 |
-| D-08 | Teste do perfil produção (R08) | Sem banco (tipos + UoW compartilhada, conexão preguiçosa) + teste de integração `@Tag("mysql")` fora do `mvn test` padrão | 🟠 Fase 3 |
-| D-09 | Perfil padrão da CLI | Memória com dados de exemplo; `--perfil=producao` para MySQL. *Se quiserem mostrar MySQL na demo, escolher produção como padrão* | 🟠 Fase 3 |
-| D-10 | Dados de exemplo (seed) | Sim | 🟠 Fase 3 |
-| D-11 | Estado no banco | Coluna `situacao VARCHAR` com o nome do estado | 🟠 Fase 3 |
+| D-06 | Criação do schema | ✅ A aplicação executa `schema.sql` (`CREATE TABLE IF NOT EXISTS`) na **primeira conexão** do perfil produção (`UnidadeDeTrabalhoJdbc`) | ✅ |
+| D-07 | Conexão | `application.properties` + variáveis de ambiente `BIBLIOTECA_DB_URL/USUARIO/SENHA`; senha fora do Git. Banco `biblioteca` e usuário próprio criados por um script SQL que a equipe executa uma vez no Workbench (`docs/mysql/criar-banco.sql`). URL e usuário têm padrão (`db.url.padrao`, `biblioteca`); só a senha é obrigatória | ✅ |
+| D-08 | Teste do perfil produção (R08) | ✅ Sem banco (tipos + UoW compartilhada, conexão preguiçosa) + `R08MySqlIntegracaoTest` `@Tag("mysql")` fora do `mvn test` padrão (`mvnw test -Pmysql`; **apaga os dados do banco** antes de cada teste) | ✅ |
+| D-09 | Perfil padrão da CLI | ✅ **Produção (MySQL)** — decidido pela equipe em 25/11: a demo mostra o R8 de verdade. `--perfil=memoria` fica como plano B se o MySQL falhar na máquina da demo. Os testes (`mvnw test`) continuam no perfil de memória | ✅ |
+| D-10 | Dados de exemplo (seed) | Sim. Como o MySQL guarda os dados entre execuções: seed **só com o banco vazio** + opção `--reiniciar-dados` para voltar ao estado inicial antes de cada ensaio/demo | 🟠 Fase 3 |
+| D-11 | Estado no banco | ✅ Coluna `livro.situacao VARCHAR(20)` com o nome do estado | ✅ |
+| D-12 | Numeração dos boletos do banco simulado × MySQL | Os bancos A/B simulados vivem em memória e recomeçam a numeração a cada execução, mas as multas ficam no MySQL. Hoje `buscarPorBoleto` pega a multa mais recente com o identificador. Recomendação para a CLI: o simulador começa a numeração depois do maior identificador já gravado; no mínimo, rodar a demo numa única execução após `--reiniciar-dados` | 🟠 CLI |
 
 ## E. Build, repositório e código
 | ID | Decisão | Recomendação | Quando |

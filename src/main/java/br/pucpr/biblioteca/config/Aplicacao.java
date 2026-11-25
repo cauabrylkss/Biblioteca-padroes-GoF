@@ -36,6 +36,8 @@ import br.pucpr.biblioteca.financeiro.PoliticaOriginal;
 import br.pucpr.biblioteca.financeiro.ServicoDeMultas;
 import br.pucpr.biblioteca.persistencia.FabricaDePersistencia;
 import br.pucpr.biblioteca.persistencia.UnidadeDeTrabalho;
+import br.pucpr.biblioteca.persistencia.jdbc.ConfiguracaoDoBanco;
+import br.pucpr.biblioteca.persistencia.jdbc.FabricaRelacional;
 import br.pucpr.biblioteca.persistencia.memoria.FabricaEmMemoria;
 import br.pucpr.biblioteca.rh.Pessoa;
 import br.pucpr.biblioteca.rh.Relacionamento;
@@ -56,7 +58,7 @@ import java.util.Properties;
  *
  * <ul>
  *   <li><b>R8</b> — a fábrica de persistência é escolhida <b>uma única vez</b>, pelo perfil
- *       ({@link #criarFabrica(PerfilDeExecucao)}); todo o resto recebe só as interfaces criadas por ela.</li>
+ *       ({@link #criarFabrica(PerfilDeExecucao, String)}); todo o resto recebe só as interfaces criadas por ela.</li>
  *   <li><b>R2</b> — políticas de multa disponíveis e a vigente ({@code multa.politica}).
  *       <i>Nova política = nova classe + uma linha na lista de {@link #politicasDeMulta()}.</i></li>
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
@@ -68,6 +70,9 @@ import java.util.Properties;
  * {@code iAtendente}, {@code iEmprestimo}, {@code iDevolucao}).
  */
 public final class Aplicacao {
+
+    private static final String URL_PADRAO_DO_BANCO =
+            "jdbc:mysql://localhost:3306/biblioteca?serverTimezone=America/Sao_Paulo";
 
     private final Properties propriedades;
     private final Clock relogio;
@@ -104,7 +109,7 @@ public final class Aplicacao {
 
         // R8: a família de persistência é escolhida aqui, uma vez.
         this.perfil = PerfilDeExecucao.de(propriedade("perfil", "teste"));
-        this.fabrica = criarFabrica(perfil);
+        this.fabrica = criarFabrica(perfil, propriedade("db.url.padrao", URL_PADRAO_DO_BANCO));
         UnidadeDeTrabalho unidadeDeTrabalho = fabrica.unidadeDeTrabalho();
 
         this.relacionamento = new Relacionamento(fabrica.relacionamento());
@@ -170,12 +175,14 @@ public final class Aplicacao {
     // Pontos de extensão
     // ---------------------------------------------------------------------------------------------
 
-    /** R8: única decisão sobre a família de persistência. */
-    static FabricaDePersistencia criarFabrica(PerfilDeExecucao perfil) {
+    /**
+     * R8: única decisão sobre a família de persistência. No perfil de produção, a senha (e, se definidos, a URL e o
+     * usuário) vêm das variáveis de ambiente {@code BIBLIOTECA_DB_*} (D-07); a conexão só é aberta no primeiro uso.
+     */
+    static FabricaDePersistencia criarFabrica(PerfilDeExecucao perfil, String urlPadraoDoBanco) {
         return switch (perfil) {
             case TESTE -> new FabricaEmMemoria();
-            case PRODUCAO -> throw new UnsupportedOperationException(
-                    "A família relacional (FabricaRelacional/MySQL) entra na Fase 3; use perfil=teste por enquanto.");
+            case PRODUCAO -> new FabricaRelacional(ConfiguracaoDoBanco.doAmbiente(urlPadraoDoBanco));
         };
     }
 
