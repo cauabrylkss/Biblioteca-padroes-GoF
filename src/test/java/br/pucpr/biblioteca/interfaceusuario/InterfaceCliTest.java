@@ -55,7 +55,7 @@ class InterfaceCliTest {
                 .contains("consultarMetadados: 2 chamada(s)")
                 .contains("Devoluções: 1 | atrasadas: 1 | dias de atraso acumulados: 5")
                 .contains("Entrada encerrada.")
-                .doesNotContain("✗");                                               // nenhuma recusa no roteiro
+                .doesNotContain("Recusado:", "ERRO:", "Erro:");                    // nenhuma recusa no roteiro
     }
 
     @Test
@@ -66,12 +66,12 @@ class InterfaceCliTest {
                 "9", "2",                 // o menu continua: consultar o livro 2
                 "0", "0"));
 
-        assertThat(saida).contains("✗ Recusado:").contains("Situação atual: LIVRE").contains("Até logo.");
+        assertThat(saida).contains("Recusado:").contains("Situação atual: LIVRE").contains("Até logo.");
     }
 
     @Test
     void estudanteInexistenteNaoEntraNoMenu() {
-        assertThat(executar(List.of("1", "99", "0"))).contains("✗ Estudante não cadastrado: 99");
+        assertThat(executar(List.of("1", "99", "0"))).contains("ERRO: Estudante não cadastrado: 99");
     }
 
     @Test

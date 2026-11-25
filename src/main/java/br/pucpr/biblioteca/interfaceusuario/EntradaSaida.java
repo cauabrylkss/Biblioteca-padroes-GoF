@@ -39,10 +39,13 @@ public final class EntradaSaida {
         this.saida = Objects.requireNonNull(saida, "saida");
     }
 
-    /** Console do sistema, opcionalmente começando por um roteiro. */
-    public static EntradaSaida doConsole(Path arquivoDeRoteiro) {
-        Charset charset = System.console() != null ? System.console().charset() : StandardCharsets.UTF_8;
-        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in, charset));
+    /**
+     * Console do sistema, opcionalmente começando por um roteiro.
+     *
+     * @param charsetDoTeclado como decodificar o que é digitado (ver {@link ConsoleDoWindows#usarUtf8()})
+     */
+    public static EntradaSaida doConsole(Path arquivoDeRoteiro, Charset charsetDoTeclado) {
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in, charsetDoTeclado));
         List<String> respostas = arquivoDeRoteiro == null ? List.of() : lerRoteiro(arquivoDeRoteiro);
         return new EntradaSaida(respostas, teclado, System.out);
     }

@@ -39,6 +39,7 @@ Pela PR1, o **desenho interno dos padrões** (grupo C) é responsabilidade do de
 | A-05 | Arquivos `.asta` | um único · manter os 8 separados | **Manter separados** | 🟢 |
 | A-06 | Quem edita a UML | equipe no Astah · LLM via API · misto | **Equipe no Astah**, guiada por `03-revisao-uml.md`; conferência com `extrair.sh` | 🟠 Fase 4 |
 | A-07 | Implantação para CLI | `biblioteca.jar` em JVM · manter web | **`biblioteca.jar`** + MySQL + Banco externo + SMTP | 🟠 Fase 4 |
+| A-09 | Refatorar a UML (máquina de estados, atividades, componentes, implantação, sequências, casos de uso) | ✅ **Não será feita** — decisão da equipe em 25/11. Os `.asta` são entregues como estão; as divergências ficam documentadas em `03-revisao-uml.md`. Substitui A-02, A-03, A-06, A-07 e A-08 | — |
 | A-08 | Componente "Interface Web" | renomear para **Interface CLI** · manter | **Renomear** | 🟠 Fase 4 |
 
 ## B. Regras de domínio que o PDF não fixa → resolvidas pela UML quando possível
@@ -114,6 +115,7 @@ Aplicadas conforme a recomendação; a equipe só precisa se manifestar se disco
 | E-06 | Organização dos testes | ✅ Uma classe por requisito (`R01StateTest`…) com métodos `R01_…` | — |
 | E-07 | Como rodar a CLI | ✅ `java -jar target/biblioteca.jar [--perfil=memoria] [--reiniciar-dados] [--roteiro=arquivo]` + `mvnw exec:java -Dexec.args="..."` | ✅ |
 | E-11 | Operações de administração/demonstração na CLI | ✅ `config.iAdministracao` / `TratadorDeAdministracao` (política de multa, grupos do acervo, medições, indicadores, relógio, pagamento simulado, e-mails) — a CLI continua falando só com tratadores | ✅ |
+| E-13 | Acentos no console do Windows | ✅ `interfaceusuario.ConsoleDoWindows`: troca o console para UTF-8 (`chcp 65001`) durante a execução e restaura ao sair; teclado lido em UTF-8 (sem console: UTF-8); saída continua forçada em UTF-8 no `Main`; sem os símbolos ✓ ✗ ⚠ ● (ausentes da fonte padrão do console) | ✅ |
 | E-12 | Estado que não vai para o MySQL | Fila de inspeção, indicadores, ids de solicitações executadas (C-04), árvore do acervo (C-08) e bancos simulados ficam em memória e recomeçam a cada execução (citado no README). Inspeção continua funcionando após reiniciar (decide o estado do livro); só a **listagem** de pendências recomeça vazia | 🟢 |
 | E-08 | Identificadores | ✅ Português sem acento | — |
 | E-09 | Javadoc com papel GoF | Sim | 🟢 |

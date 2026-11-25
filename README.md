@@ -5,8 +5,8 @@ GoF** exigidos no trabalho de Modelagem de Sistemas Computacionais (PUCPR, Prof.
 
 **Equipe:** Vicente, Gabriel, Clara, Cauã.
 
-> Projeto em desenvolvimento: entrega em 27/11/2026, 09h40. O andamento de cada requisito está em
-> [docs/RASTREABILIDADE.md](docs/RASTREABILIDADE.md).
+> Entrega em 27/11/2026, 09h40. Os 10 requisitos estão implementados e testados; o mapa requisito → padrão →
+> classes → teste está em [docs/RASTREABILIDADE.md](docs/RASTREABILIDADE.md).
 
 ## Requisitos
 - **JDK 21 ou superior** (desenvolvido com o JDK 25; o bytecode é Java 21) com `JAVA_HOME` configurado.
@@ -89,10 +89,11 @@ docs/
 Os pacotes correspondem aos componentes do diagrama de componentes (Biblioteca, RH, Acadêmico, Financeiro, Banco).
 
 ## Modelos UML
-Fontes no Astah em `docs/*.asta`. **Observação:** por orientação verbal do professor, os **diagramas de classes não
-foram atualizados** para os padrões; o desenho dos padrões está no código e em
-[docs/contexto/04-arquitetura-alvo.md](docs/contexto/04-arquitetura-alvo.md). Máquina de estados de Livro, atividades,
-componentes e implantação foram revisados conforme [docs/contexto/03-revisao-uml.md](docs/contexto/03-revisao-uml.md).
+Fontes no Astah em `docs/*.asta`, entregues **como estavam no início do trabalho**. **Observação:** por orientação
+verbal do professor, os **diagramas de classes não foram atualizados** para os padrões; o desenho dos padrões está no
+código e em [docs/contexto/04-arquitetura-alvo.md](docs/contexto/04-arquitetura-alvo.md). Os demais diagramas também
+não foram refatorados (decisão da equipe); as diferenças entre eles e o código — e como cada uma seria corrigida —
+estão em [docs/contexto/03-revisao-uml.md](docs/contexto/03-revisao-uml.md).
 
 ## Uso de LLMs
 | Ferramenta / modelo | Onde foi usado |

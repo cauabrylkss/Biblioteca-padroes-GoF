@@ -96,7 +96,7 @@ public class InterfaceCli {
         long id = es.lerNumero("Id do estudante");
         Optional<FichaDoPapel> estudante = estudantes.consultarEstudante(id);
         if (estudante.isEmpty()) {
-            es.mostrar("✗ Estudante não cadastrado: " + id);
+            es.mostrar("ERRO: Estudante não cadastrado: " + id);
             return;
         }
         String nome = estudante.get().nomeCompleto();
@@ -139,7 +139,7 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         ComprovanteReserva c = emprestimos.solicitarReserva(
                 SolicitacaoDeReserva.nova(autor, relogio, idLivro, idEstudante));
-        es.mostrar("✓ Reserva " + c.idReserva() + " em " + data(c.dataReserva()) + ": livro " + c.idLivro()
+        es.mostrar("OK: Reserva " + c.idReserva() + " em " + data(c.dataReserva()) + ": livro " + c.idLivro()
                 + " agora está " + c.situacaoLivro() + ".");
     }
 
@@ -155,7 +155,7 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         ComprovanteRenovacao c = emprestimos.renovarEmprestimo(
                 SolicitacaoDeRenovacao.nova(autor, relogio, idLivro, idEstudante));
-        es.mostrar("✓ Empréstimo " + c.idEmprestimo() + " renovado: vencimento " + data(c.vencimentoAnterior())
+        es.mostrar("OK: Empréstimo " + c.idEmprestimo() + " renovado: vencimento " + data(c.vencimentoAnterior())
                 + " → " + data(c.novoVencimento()) + " (renovações feitas: " + c.numRenovacoes() + "). Livro "
                 + c.situacaoLivro() + ".");
     }
@@ -184,7 +184,7 @@ public class InterfaceCli {
         long id = es.lerNumero("Id do atendente");
         Optional<FichaDoPapel> atendente = atendentes.consultarAtendente(id);
         if (atendente.isEmpty()) {
-            es.mostrar("✗ Atendente não cadastrado: " + id);
+            es.mostrar("ERRO: Atendente não cadastrado: " + id);
             return;
         }
         menu("Atendente " + id + " — " + atendente.get().nomeCompleto(), "Voltar",
@@ -206,17 +206,17 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         long idEstudante = es.lerNumero("Id do estudante");
         ComprovanteEmprestimo c = emprestimos.realizarEmprestimo(idLivro, idEstudante, idAtendente);
-        es.mostrar("✓ " + descrever(c));
+        es.mostrar("OK: " + descrever(c));
     }
 
     private void registrarDevolucao(long idAtendente) {
         long idLivro = es.lerNumero("Id do livro");
         long idEstudante = es.lerNumero("Id do estudante");
         ComprovanteDevolucao c = devolucoes.registrarDevolucao(idLivro, idEstudante, idAtendente);
-        es.mostrar("✓ Devolução " + c.idDevolucao() + " do empréstimo " + c.idEmprestimo() + ": vencimento "
+        es.mostrar("OK: Devolução " + c.idDevolucao() + " do empréstimo " + c.idEmprestimo() + ": vencimento "
                 + data(c.vencimento()) + ", devolvido em " + data(c.dataDevolucao()) + ", atraso de "
                 + c.diasDeAtraso() + " dia(s). Livro " + c.situacaoLivro() + " — aguarda inspeção.");
-        c.avisos().forEach(aviso -> es.mostrar("  ⚠ " + aviso));
+        c.avisos().forEach(aviso -> es.mostrar("  Aviso: " + aviso));
         // a multa é emitida automaticamente pelo ouvinte da devolução (R5, B-12); aqui só é consultada
         devolucoes.emitirBoletoDeMulta(idLivro, idEstudante).ifPresentOrElse(
                 m -> es.mostrar("  Multa emitida: " + descrever(m)),
@@ -265,19 +265,19 @@ public class InterfaceCli {
                 new Opcao("2", "Cadastrar livro", this::cadastrarLivro),
                 new Opcao("3", "Alterar título", () -> {
                     long id = es.lerNumero("Id do livro");
-                    es.mostrar("✓ " + descrever(acervo.atualizarLivro(id, es.ler("Novo título"))));
+                    es.mostrar("OK: " + descrever(acervo.atualizarLivro(id, es.ler("Novo título"))));
                 }),
                 new Opcao("4", "Excluir livro", () -> {
                     long id = es.lerNumero("Id do livro");
                     acervo.excluirLivro(id);
-                    es.mostrar("✓ Livro " + id + " excluído.");
+                    es.mostrar("OK: Livro " + id + " excluído.");
                 }),
                 new Opcao("5", "Organização do acervo (R10)", this::mostrarOrganizacao),
                 new Opcao("6", "Mover livro para outro grupo", () -> {
                     long idLivro = es.lerNumero("Id do livro");
                     mostrarOrganizacao();
                     administracao.moverLivro(idLivro, es.lerNumero("Id do grupo de destino"));
-                    es.mostrar("✓ Livro " + idLivro + " movido. Id, estado e empréstimo não mudam.");
+                    es.mostrar("OK: Livro " + idLivro + " movido. Id, estado e empréstimo não mudam.");
                 }));
     }
 
@@ -295,7 +295,7 @@ public class InterfaceCli {
         mostrarOrganizacao();
         Long idGrupo = es.lerNumeroOpcional("Id do grupo (em branco = não catalogar)");
         Resultado<FichaDoLivro> r = acervo.inserirLivro(id, titulo, idGrupo);
-        es.mostrar((r.novo() ? "✓ Cadastrado: " : "Já existia um livro com esse id: ") + descrever(r.cadastro()));
+        es.mostrar((r.novo() ? "OK: Cadastrado: " : "Já existia um livro com esse id: ") + descrever(r.cadastro()));
     }
 
     private void mostrarOrganizacao() {
@@ -318,25 +318,25 @@ public class InterfaceCli {
                     String nome = es.ler("Nome");
                     String sobrenome = es.ler("Sobrenome");
                     Resultado<FichaDaPessoa> r = pessoas.inserirPessoa(nome, sobrenome, es.ler("CPF"));
-                    es.mostrar((r.novo() ? "✓ Cadastrada: " : "CPF já cadastrado: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Cadastrada: " : "CPF já cadastrado: ") + descrever(r.cadastro()));
                 }),
                 new Opcao("3", "Alterar nome de pessoa", () -> {
                     long id = es.lerNumero("Id da pessoa");
                     String nome = es.ler("Nome");
-                    es.mostrar("✓ " + descrever(pessoas.atualizarPessoa(id, nome, es.ler("Sobrenome"))));
+                    es.mostrar("OK: " + descrever(pessoas.atualizarPessoa(id, nome, es.ler("Sobrenome"))));
                 }),
                 new Opcao("4", "Excluir pessoa", () -> {
                     long id = es.lerNumero("Id da pessoa");
                     pessoas.excluirPessoa(id);
-                    es.mostrar("✓ Pessoa " + id + " excluída.");
+                    es.mostrar("OK: Pessoa " + id + " excluída.");
                 }),
                 new Opcao("5", "Tornar estudante (pelo CPF)", () -> {
                     Resultado<FichaDoPapel> r = estudantes.inserirEstudante(es.ler("CPF"));
-                    es.mostrar((r.novo() ? "✓ Estudante cadastrado: " : "Já era estudante: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Estudante cadastrado: " : "Já era estudante: ") + descrever(r.cadastro()));
                 }),
                 new Opcao("6", "Tornar atendente (pelo CPF)", () -> {
                     Resultado<FichaDoPapel> r = atendentes.inserirAtendente(es.ler("CPF"));
-                    es.mostrar((r.novo() ? "✓ Atendente cadastrado: " : "Já era atendente: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Atendente cadastrado: " : "Já era atendente: ") + descrever(r.cadastro()));
                 }),
                 new Opcao("7", "Consultar estudante", () -> {
                     long id = es.lerNumero("Id do estudante");
@@ -351,23 +351,23 @@ public class InterfaceCli {
                 new Opcao("9", "Excluir estudante", () -> {
                     long id = es.lerNumero("Id do estudante");
                     estudantes.excluirEstudante(id);
-                    es.mostrar("✓ Estudante " + id + " excluído.");
+                    es.mostrar("OK: Estudante " + id + " excluído.");
                 }),
                 new Opcao("10", "Excluir atendente", () -> {
                     long id = es.lerNumero("Id do atendente");
                     atendentes.excluirAtendente(id);
-                    es.mostrar("✓ Atendente " + id + " excluído.");
+                    es.mostrar("OK: Atendente " + id + " excluído.");
                 }));
     }
 
     private void politicaDeMulta() {
         for (iAdministracao.PoliticaDisponivel p : administracao.politicasDeMulta()) {
-            es.mostrar("  " + (p.vigente() ? "● " : "  ") + p.codigo() + " — " + p.descricao());
+            es.mostrar("  " + (p.vigente() ? "* " : "  ") + p.codigo() + " — " + p.descricao());
         }
         String codigo = es.ler("Nova política (em branco = manter)");
         if (!codigo.isEmpty()) {
             administracao.definirPoliticaDeMulta(codigo);
-            es.mostrar("✓ Política vigente: " + codigo + ". Multas já emitidas mantêm a política gravada.");
+            es.mostrar("OK: Política vigente: " + codigo + ". Multas já emitidas mantêm a política gravada.");
         }
     }
 
@@ -394,7 +394,7 @@ public class InterfaceCli {
         menu("Ferramentas da demonstração", "Voltar",
                 new Opcao("1", "Avançar o relógio", () -> {
                     LocalDate hoje = administracao.avancarDias(es.lerNumero("Quantos dias"));
-                    es.mostrar("✓ Hoje agora é " + data(hoje) + ".");
+                    es.mostrar("OK: Hoje agora é " + data(hoje) + ".");
                 }),
                 new Opcao("2", "Multas de um estudante", () -> mostrarMultas(es.lerNumero("Id do estudante"))),
                 new Opcao("3", "Simular pagamento de boleto no banco", () -> {
@@ -412,7 +412,7 @@ public class InterfaceCli {
                 new Opcao("5", "Ligar/desligar falha do e-mail (R5)", () -> {
                     boolean falhar = es.lerSimNao("Simular servidor de e-mail fora do ar?");
                     administracao.definirFalhaDoEmail(falhar);
-                    es.mostrar("✓ E-mail " + (falhar ? "falhando" : "funcionando") + ".");
+                    es.mostrar("OK: E-mail " + (falhar ? "falhando" : "funcionando") + ".");
                 }),
                 new Opcao("6", "Sobre a instalação", () -> es.mostrar("  " + administracao.descricaoDaInstalacao())));
     }
@@ -449,16 +449,16 @@ public class InterfaceCli {
         } catch (FimDaEntrada fim) {
             throw fim;
         } catch (RegraDeNegocioException recusa) {
-            es.mostrar("✗ Recusado: " + recusa.getMessage());
+            es.mostrar("Recusado: " + recusa.getMessage());
         } catch (IllegalArgumentException invalido) {
-            es.mostrar("✗ Dados inválidos: " + invalido.getMessage());
+            es.mostrar("Dados inválidos: " + invalido.getMessage());
         } catch (RuntimeException erro) {
-            es.mostrar("✗ Erro: " + erro.getMessage());
+            es.mostrar("Erro: " + erro.getMessage());
         }
     }
 
     private void mostrar(ComprovanteDeSituacao c) {
-        es.mostrar("✓ " + c.operacao() + ": livro " + c.idLivro() + " " + c.situacaoAnterior() + " → "
+        es.mostrar("OK: " + c.operacao() + ": livro " + c.idLivro() + " " + c.situacaoAnterior() + " → "
                 + c.situacaoLivro() + " (" + data(c.data()) + ")");
     }
 
