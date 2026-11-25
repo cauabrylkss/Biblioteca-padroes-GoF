@@ -1,0 +1,9 @@
+# Normaliza finais de linha: scripts Unix precisam de LF, scripts Windows de CRLF.
+* text=auto
+mvnw text eol=lf
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.asta binary
+*.pdf binary
+*.png binary
