@@ -39,6 +39,7 @@ Pela PR1, o **desenho interno dos padrões** (grupo C) é responsabilidade do de
 | A-05 | Arquivos `.asta` | um único · manter os 8 separados | **Manter separados** | 🟢 |
 | A-06 | Quem edita a UML | equipe no Astah · LLM via API · misto | **Equipe no Astah**, guiada por `03-revisao-uml.md`; conferência com `extrair.sh` | 🟠 Fase 4 |
 | A-07 | Implantação para CLI | `biblioteca.jar` em JVM · manter web | **`biblioteca.jar`** + MySQL + Banco externo + SMTP | 🟠 Fase 4 |
+| A-09 | Refatorar a UML (máquina de estados, atividades, componentes, implantação, sequências, casos de uso) | ✅ **Não será feita** — decisão da equipe em 25/11. Os `.asta` são entregues como estão; as divergências ficam documentadas em `03-revisao-uml.md`. Substitui A-02, A-03, A-06, A-07 e A-08 | — |
 | A-08 | Componente "Interface Web" | renomear para **Interface CLI** · manter | **Renomear** | 🟠 Fase 4 |
 
 ## B. Regras de domínio que o PDF não fixa → resolvidas pela UML quando possível
@@ -56,9 +57,9 @@ Coluna **Fonte**: PDF · UML (diagrama) · ❓ (nenhum dos dois — vale a recom
 | B-08 | Política com tolerância | (dias − 2) × R$1 → 5 dias = R$3,00 | PDF (cenário) | ✅ |
 | B-09 | Política com teto | mín(dias × R$1, R$20) | PDF | ✅ |
 | B-10 | Política vigente padrão | Recomendação: original | ❓ | 🟢 |
-| B-11 | Como o admin troca a política | Recomendação: padrão no `.properties` + comando de administração na CLI | ❓ | 🟠 Fase 1 |
+| B-11 | Como o admin troca a política | ✅ Padrão no `.properties` (`multa.politica`) + Administrador → Política de multa na CLI (`iAdministracao.definirPoliticaDeMulta`) | Implementação CLI | ✅ |
 | B-12 | Quando a multa é emitida | **Automaticamente na devolução atrasada** (efeito `/emitirBoletoDeMulta` na máquina; sequência de devolução chama `emitirBoletoDeMulta` se atrasado) → implementado pelo **ouvinte de multa** (R5). `iDevolucao.emitirBoletoDeMulta` continua disponível ao atendente (caso de uso "Emitir multa") para consultar/reemitir | UML + PDF R5 | ✅ |
-| B-13 | Boleto | **Entidade `Boleto`** com situação **EMITIDO → PAGO**, emitido junto com a multa via adaptador do banco e **enviado ao estudante por e-mail** | UML atividade | ✅ (Fase 2: boleto emitido pelo `OuvinteMulta`; o e-mail do boleto — e o de quitação, B-16 — fica para a Fase 3; hoje o `OuvinteEmail` envia só o aviso de devolução) |
+| B-13 | Boleto | **Entidade `Boleto`** com situação **EMITIDO → PAGO**, emitido junto com a multa via adaptador do banco e **enviado ao estudante por e-mail** | UML atividade | ✅ (boleto emitido pelo `OuvinteMulta`; o `ServicoDeMultas` envia o e-mail do boleto e o de quitação, B-16 — falha no envio vai para o log e não desfaz nada) |
 | B-14 | Formato das APIs simuladas dos bancos A/B | A = centavos `long`, CPF só dígitos, status `int` (1/2/9), id `long`; B = texto "7,00", CPF formatado, status `String` (ABERTO/LIQUIDADO/BAIXADO), id `B-000001`; cada banco com formato próprio de notificação | Implementação R3 | ✅ |
 | B-15 | Banco da instalação | A por padrão, via `banco=` no `.properties` (`config.BancoDaInstalacao`) | Implementação R3 | ✅ |
 | B-16 | Pagamento e quitação | Fluxo: estudante paga → **Banco recebe → informa quitação ao Financeiro → registrar multa como quitada (Boleto PAGO, Multa QUITADA) → notificar usuário**. Na CLI: comando "simular pagamento" que gera a notificação bruta do banco | UML atividade + PDF R3 | ✅ |
@@ -104,15 +105,18 @@ Aplicadas conforme a recomendação; a equipe só precisa se manifestar se disco
 | D-07 | Conexão | `application.properties` + variáveis de ambiente `BIBLIOTECA_DB_URL/USUARIO/SENHA`; senha fora do Git. Banco `biblioteca` e usuário próprio criados por um script SQL que a equipe executa uma vez no Workbench (`docs/mysql/criar-banco.sql`). URL e usuário têm padrão (`db.url.padrao`, `biblioteca`); só a senha é obrigatória | ✅ |
 | D-08 | Teste do perfil produção (R08) | ✅ Sem banco (tipos + UoW compartilhada, conexão preguiçosa) + `R08MySqlIntegracaoTest` `@Tag("mysql")` fora do `mvn test` padrão (`mvnw test -Pmysql`; **apaga os dados do banco** antes de cada teste) | ✅ |
 | D-09 | Perfil padrão da CLI | ✅ **Produção (MySQL)** — decidido pela equipe em 25/11: a demo mostra o R8 de verdade. `--perfil=memoria` fica como plano B se o MySQL falhar na máquina da demo. Os testes (`mvnw test`) continuam no perfil de memória | ✅ |
-| D-10 | Dados de exemplo (seed) | Sim. Como o MySQL guarda os dados entre execuções: seed **só com o banco vazio** + opção `--reiniciar-dados` para voltar ao estado inicial antes de cada ensaio/demo | 🟠 Fase 3 |
+| D-10 | Dados de exemplo (seed) | ✅ `config.DadosDeExemplo`: cadastros pelos tratadores **só com o banco vazio**; a organização do acervo (C-08) é montada a cada execução e os livros de exemplo existentes são recatalogados. `--reiniciar-dados` volta ao estado inicial | ✅ |
 | D-11 | Estado no banco | ✅ Coluna `livro.situacao VARCHAR(20)` com o nome do estado | ✅ |
-| D-12 | Numeração dos boletos do banco simulado × MySQL | Os bancos A/B simulados vivem em memória e recomeçam a numeração a cada execução, mas as multas ficam no MySQL. Hoje `buscarPorBoleto` pega a multa mais recente com o identificador. Recomendação para a CLI: o simulador começa a numeração depois do maior identificador já gravado; no mínimo, rodar a demo numa única execução após `--reiniciar-dados` | 🟠 CLI |
+| D-12 | Numeração dos boletos do banco simulado × MySQL | ✅ Os bancos A/B simulados vivem em memória e recomeçavam a numeração a cada execução, mas as multas ficam no MySQL. **Resolvido:** ao subir, `Aplicacao.prepararParaUso` passa ao simulador os identificadores já gravados (`RepositorioDeMultas.identificadoresDeBoleto`) e ele continua depois do maior (`continuarNumeracaoApos`) | ✅ |
 
 ## E. Build, repositório e código
 | ID | Decisão | Recomendação | Quando |
 |---|---|---|---|
 | E-06 | Organização dos testes | ✅ Uma classe por requisito (`R01StateTest`…) com métodos `R01_…` | — |
-| E-07 | Como rodar a CLI | Jar executável (`java -jar target/biblioteca.jar`) + `mvnw exec:java` | 🟠 Fase 3 |
+| E-07 | Como rodar a CLI | ✅ `java -jar target/biblioteca.jar [--perfil=memoria] [--reiniciar-dados] [--roteiro=arquivo]` + `mvnw exec:java -Dexec.args="..."` | ✅ |
+| E-11 | Operações de administração/demonstração na CLI | ✅ `config.iAdministracao` / `TratadorDeAdministracao` (política de multa, grupos do acervo, medições, indicadores, relógio, pagamento simulado, e-mails) — a CLI continua falando só com tratadores | ✅ |
+| E-13 | Acentos no console do Windows | ✅ `interfaceusuario.ConsoleDoWindows`: troca o console para UTF-8 (`chcp 65001`) durante a execução e restaura ao sair; teclado lido em UTF-8 (sem console: UTF-8); saída continua forçada em UTF-8 no `Main`; sem os símbolos ✓ ✗ ⚠ ● (ausentes da fonte padrão do console) | ✅ |
+| E-12 | Estado que não vai para o MySQL | Fila de inspeção, indicadores, ids de solicitações executadas (C-04), árvore do acervo (C-08) e bancos simulados ficam em memória e recomeçam a cada execução (citado no README). Inspeção continua funcionando após reiniciar (decide o estado do livro); só a **listagem** de pendências recomeça vazia | 🟢 |
 | E-08 | Identificadores | ✅ Português sem acento | — |
 | E-09 | Javadoc com papel GoF | Sim | 🟢 |
 | E-10 | Fluxo Git | ✅ **Uma branch por padrão/fase** (`fase0/fundacao`, `r01-state`, …) + PR revisado por outro integrante | — |

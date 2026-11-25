@@ -2,15 +2,19 @@ package br.pucpr.biblioteca.financeiro;
 
 import br.pucpr.biblioteca.compartilhado.DiasDeAtraso;
 import br.pucpr.biblioteca.compartilhado.RegraDeNegocioException;
+import br.pucpr.biblioteca.compartilhado.ServicoDeEmail;
 import br.pucpr.biblioteca.financeiro.cobranca.CobrancaRegistrada;
 import br.pucpr.biblioteca.financeiro.cobranca.NotificacaoPagamento;
 import br.pucpr.biblioteca.financeiro.cobranca.ServicoDeCobranca;
 import br.pucpr.biblioteca.financeiro.cobranca.SituacaoPagamento;
 import br.pucpr.biblioteca.financeiro.cobranca.SolicitacaoCobranca;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -25,20 +29,33 @@ import java.util.Optional;
  * adaptador do banco da instalação é escolhido no composition root.
  *
  * <p>Realiza {@link iMulta}, a interface que o Financeiro oferece à Biblioteca (usada pelo ouvinte de multa, R5).
+ *
+ * <p>E-mails ao estudante (B-13, B-16): o boleto, quando é emitido, e o aviso de quitação, quando o banco confirma o
+ * pagamento. São avisos: se o envio falhar, o erro vai para o log e a multa/quitação continua gravada.
  */
 public class ServicoDeMultas implements iMulta {
+
+    private static final Logger LOG = System.getLogger(ServicoDeMultas.class.getName());
 
     private final ConfiguracaoAdministrativa configuracao;
     private final RepositorioDeMultas multas;
     private final ServicoDeCobranca cobranca;
     private final ConsultaDePagador pagadores;
+    private final ServicoDeEmail email;
 
+    /** Sem envio de e-mails (usado nos testes do cálculo e do adaptador). */
     public ServicoDeMultas(ConfiguracaoAdministrativa configuracao, RepositorioDeMultas multas,
                            ServicoDeCobranca cobranca, ConsultaDePagador pagadores) {
+        this(configuracao, multas, cobranca, pagadores, (idEstudante, assunto, texto) -> { });
+    }
+
+    public ServicoDeMultas(ConfiguracaoAdministrativa configuracao, RepositorioDeMultas multas,
+                           ServicoDeCobranca cobranca, ConsultaDePagador pagadores, ServicoDeEmail email) {
         this.configuracao = Objects.requireNonNull(configuracao, "configuracao");
         this.multas = Objects.requireNonNull(multas, "multas");
         this.cobranca = Objects.requireNonNull(cobranca, "cobranca");
         this.pagadores = Objects.requireNonNull(pagadores, "pagadores");
+        this.email = Objects.requireNonNull(email, "email");
     }
 
     /** Valor que a política vigente cobraria pelos dias informados (2 casas decimais). */
@@ -87,6 +104,9 @@ public class ServicoDeMultas implements iMulta {
         }
         multa.quitar();                                               // multa QUITADA, boleto PAGO
         multas.salvar(multa);
+        avisar(multa.getIdEstudante(), "Multa quitada", "O banco " + cobranca.banco() + " confirmou o pagamento do boleto "
+                + notificacao.identificadorNoBanco() + " (" + reais(multa.getValor()) + "). A multa " + multa.getId()
+                + " está quitada.");
         return ResultadoDaNotificacao.MULTA_QUITADA;
     }
 
@@ -110,5 +130,21 @@ public class ServicoDeMultas implements iMulta {
         CobrancaRegistrada registrada = cobranca.registrar(solicitacao);
         multa.vincularBoleto(new Boleto(registrada.banco(), registrada.identificadorNoBanco(), multa.getValor()));
         multas.salvar(multa);
+        avisar(multa.getIdEstudante(), "Boleto da multa", "Multa de " + reais(multa.getValor()) + " por "
+                + multa.getDiasDeAtraso() + " dia(s) de atraso (política " + multa.getCodigoPolitica() + "). Boleto "
+                + registrada.identificadorNoBanco() + " no banco " + registrada.banco() + ".");
+    }
+
+    private static String reais(BigDecimal valor) {
+        return String.format(Locale.of("pt", "BR"), "R$ %,.2f", valor);
+    }
+
+    /** Envia o e-mail ao estudante; falha no envio não desfaz a multa nem a quitação (já gravadas). */
+    private void avisar(long idEstudante, String assunto, String texto) {
+        try {
+            email.enviar(idEstudante, assunto, texto);
+        } catch (RuntimeException falha) {
+            LOG.log(Level.WARNING, "E-mail '" + assunto + "' não enviado ao estudante " + idEstudante, falha);
+        }
     }
 }

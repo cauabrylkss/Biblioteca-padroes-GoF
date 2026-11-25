@@ -31,6 +31,14 @@ public class BancoAApi {
     private final AtomicLong proximoEvento = new AtomicLong(1);
     private final Map<Long, Titulo> titulos = new LinkedHashMap<>();
 
+    /**
+     * O banco simulado vive só na memória e recomeça em 1001 a cada execução; as multas, no MySQL, guardam os códigos
+     * já emitidos. Ao subir, a aplicação informa o maior código já usado para não repetir (D-12).
+     */
+    public void continuarNumeracaoApos(long ultimoCodigoUsado) {
+        proximoCodigo.accumulateAndGet(ultimoCodigoUsado + 1, Math::max);
+    }
+
     /** Registra um título de cobrança. */
     public synchronized long registrarTitulo(long nossoNumero, long valorEmCentavos, String cpfSomenteDigitos) {
         if (valorEmCentavos <= 0) {

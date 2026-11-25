@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import br.pucpr.biblioteca.CenarioDeTeste;
 import br.pucpr.biblioteca.biblioteca.livro.SituacaoLivro;
 import br.pucpr.biblioteca.biblioteca.tratadores.iDevolucao;
+import br.pucpr.biblioteca.compartilhado.ServicoDeEmailSimulado;
 import br.pucpr.biblioteca.financeiro.EstadoMulta;
 import br.pucpr.biblioteca.financeiro.ResumoDaMulta;
 import br.pucpr.biblioteca.financeiro.SituacaoBoleto;
@@ -49,9 +50,10 @@ class R05ObserverTest {
         assertThat(c.app.indicadores().devolucoes()).isEqualTo(1);
         assertThat(c.app.indicadores().devolucoesAtrasadas()).isEqualTo(1);
         assertThat(c.app.indicadores().diasDeAtrasoAcumulados()).isEqualTo(5);
-        // e-mail
-        assertThat(c.app.email().enviadas()).hasSize(1).first()
-                .satisfies(m -> assertThat(m.idEstudante()).isEqualTo(c.ana));
+        // e-mails à Ana: boleto da multa (Financeiro, B-13) e aviso de devolução (ouvinte de e-mail)
+        assertThat(c.app.email().enviadas()).allSatisfy(m -> assertThat(m.idEstudante()).isEqualTo(c.ana))
+                .extracting(ServicoDeEmailSimulado.Mensagem::assunto)
+                .containsExactly("Boleto da multa", "Devolução registrada");
         // o livro continua DEVOLVIDO até a inspeção
         assertThat(situacao(c)).isEqualTo(DEVOLVIDO);
     }

@@ -83,7 +83,7 @@ public final class RepositorioDeMultasJdbc implements RepositorioDeMultas {
 
     @Override
     public Optional<Multa> buscarPorBoleto(String banco, String identificadorNoBanco) {
-        // a mais recente, caso o banco simulado (que recomeça a numeração a cada execução) repita um identificador
+        // a mais recente, por segurança; o banco simulado continua a numeração após o maior identificador gravado (D-12)
         return buscarUma(COLUNAS + " WHERE boleto_banco = ? AND boleto_identificador = ? ORDER BY id DESC LIMIT 1",
                 ps -> {
                     ps.setString(1, banco);
@@ -110,6 +110,23 @@ public final class RepositorioDeMultasJdbc implements RepositorioDeMultas {
     @Override
     public Optional<Multa> buscarPorEmprestimo(long idEmprestimo) {
         return buscarUma(COLUNAS + " WHERE id_emprestimo = ? ORDER BY id LIMIT 1", ps -> ps.setLong(1, idEmprestimo));
+    }
+
+    @Override
+    public List<String> identificadoresDeBoleto(String banco) {
+        return unidade.executar(c -> {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT boleto_identificador FROM multa WHERE boleto_banco = ? ORDER BY id")) {
+                ps.setString(1, banco);
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<String> ids = new ArrayList<>();
+                    while (rs.next()) {
+                        ids.add(rs.getString(1));
+                    }
+                    return ids;
+                }
+            }
+        });
     }
 
     /** {@code INSERT IGNORE}: se a chave (banco, id) já existe, nenhuma linha é inserida → já processada. */

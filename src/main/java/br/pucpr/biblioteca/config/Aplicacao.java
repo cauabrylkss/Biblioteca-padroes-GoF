@@ -8,6 +8,7 @@ import br.pucpr.biblioteca.biblioteca.acervo.ConsultaAcervo;
 import br.pucpr.biblioteca.biblioteca.acervo.ConsultaAcervoPadrao;
 import br.pucpr.biblioteca.biblioteca.acervo.ConsultaComCache;
 import br.pucpr.biblioteca.biblioteca.acervo.ConsultaComMedicao;
+import br.pucpr.biblioteca.biblioteca.acervo.DecoradorDeConsulta;
 import br.pucpr.biblioteca.biblioteca.acervo.Medidor;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
 import br.pucpr.biblioteca.biblioteca.circulacao.ExecutorDeSolicitacoes;
@@ -74,7 +75,7 @@ import java.util.Properties;
  *   <li><b>R4/R6/R7</b> — fachada, executor de solicitações, cadastros e tratadores.</li>
  * </ul>
  * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
- * {@code iAtendente}, {@code iEmprestimo}, {@code iDevolucao}).
+ * {@code iAtendente}, {@code iEmprestimo}, {@code iDevolucao} e {@code iAdministracao}).
  */
 public final class Aplicacao {
 
@@ -113,6 +114,7 @@ public final class Aplicacao {
     private final iAtendente tratadorDeAtendente;
     private final iEmprestimo tratadorDeEmprestimo;
     private final iDevolucao tratadorDeDevolucao;
+    private final iAdministracao tratadorDeAdministracao;
 
     private Aplicacao(Properties propriedades, Clock relogio) {
         this.propriedades = Objects.requireNonNull(propriedades, "propriedades");
@@ -134,11 +136,11 @@ public final class Aplicacao {
         this.configuracaoDeMultas =
                 new ConfiguracaoAdministrativa(politicasDeMulta(), propriedade("multa.politica", PoliticaOriginal.CODIGO));
         this.banco = BancoDaInstalacao.criar(propriedade("banco", "A"));
+        this.email = new ServicoDeEmailSimulado(Boolean.parseBoolean(propriedade("email.falhar", "false")));
         this.servicoDeMultas = new ServicoDeMultas(configuracaoDeMultas, fabrica.multas(), banco.cobranca(),
-                pagadoresDoRelacionamento());
+                pagadoresDoRelacionamento(), email);
 
         // R5
-        this.email = new ServicoDeEmailSimulado(Boolean.parseBoolean(propriedade("email.falhar", "false")));
         registrarOuvintes();
 
         // R4 + R6
@@ -155,11 +157,44 @@ public final class Aplicacao {
         this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
         this.tratadorDeEmprestimo = new TratadorDeEmprestimo(fachada, executor);
         this.tratadorDeDevolucao = new TratadorDeDevolucao(fachada, servicoDeMultas, filaDeInspecao);
+        this.tratadorDeAdministracao = new TratadorDeAdministracao(this::descricaoDaInstalacao, relogio,
+                configuracaoDeMultas, servicoDeMultas, banco.simulador(), acervo, medidorDaConsulta, indicadores, email);
     }
 
     /** Monta a aplicação com a configuração e o relógio informados (testes usam um relógio ajustável). */
     public static Aplicacao montar(Properties propriedades, Clock relogio) {
         return new Aplicacao(propriedades, relogio);
+    }
+
+    /**
+     * Deixa a aplicação pronta para a CLI (chamado pelo {@code Main}, nunca na montagem — montar não conecta no banco):
+     * apaga os dados se pedido ({@code --reiniciar-dados}), carrega os dados de exemplo (D-10) e faz o banco simulado
+     * continuar a numeração dos boletos já gravados (D-12).
+     */
+    public void prepararParaUso(boolean reiniciarDados) {
+        if (reiniciarDados && fabrica instanceof FabricaRelacional relacional) {
+            relacional.apagarTodosOsDados();          // na memória não há o que apagar: cada execução começa vazia
+        }
+        DadosDeExemplo.carregar(this);
+        banco.simulador().continuarNumeracaoApos(fabrica.multas().identificadoresDeBoleto(banco.cobranca().banco()));
+    }
+
+    /** Perfil, banco e recursos ligados, para a tela "Sobre a instalação". */
+    private String descricaoDaInstalacao() {
+        String persistencia = perfil == PerfilDeExecucao.PRODUCAO ? "producao (MySQL)" : "memoria";
+        return "Perfil: " + persistencia
+                + " | Banco da instalação: " + banco.cobranca().banco()
+                + " | Política de multa: " + configuracaoDeMultas.politicaVigente().codigo()
+                + " | Consulta ao acervo: " + cadeiaDaConsulta(consultaAcervo)
+                + " | E-mail: simulado";
+    }
+
+    /** Ex.: "ConsultaComMedicao → ConsultaComCache → ConsultaAcervoPadrao". */
+    private static String cadeiaDaConsulta(ConsultaAcervo consulta) {
+        String nome = consulta.getClass().getSimpleName();
+        return consulta instanceof DecoradorDeConsulta decorador
+                ? nome + " → " + cadeiaDaConsulta(decorador.interna())
+                : nome;
     }
 
     /** Monta com {@code application.properties} (+ sobrescritas por {@code -Dchave=valor}) e o relógio do sistema. */
@@ -268,6 +303,10 @@ public final class Aplicacao {
 
     public iDevolucao tratadorDeDevolucao() {
         return tratadorDeDevolucao;
+    }
+
+    public iAdministracao tratadorDeAdministracao() {
+        return tratadorDeAdministracao;
     }
 
     // ---------------------------------------------------------------------------------------------
