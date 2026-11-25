@@ -137,7 +137,7 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
 
 Sem `desfazer`: circulação é fato registrado com efeitos externos (e-mail, boleto); correção é nova operação de domínio.
 
-## R7 — Template Method
+## R7 — Template Method  ✅ implementado (`cadastro`)
 ```java
 public abstract class CadastroTemplate<D, T> {
     public final Resultado<T> incluir(D dados) {          // método-modelo, final
@@ -162,6 +162,12 @@ public abstract class CadastroTemplate<D, T> {
 Subclasses: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante` (pré-requisito: Pessoa com o CPF existe),
 `CadastroDeAtendente` (idem). `TratadorDeAcervo implements iLivro`, `TratadorDePessoa implements iPessoa`, etc. delegam
 `inserir*` ao cadastro correspondente.
+
+Implementado com uma diferença: o gancho final recebe também os dados de entrada — `aposArmazenar(D dados, E entidade)`
+—, porque o `CadastroDeLivro` precisa do grupo informado para catalogar o livro (R10). `CadastroDeLivro` usa os dois
+ganchos (`verificarPreRequisitos`: grupo existe; `aposArmazenar`: catalogar). Estudante/Atendente recebem o **CPF** da
+pessoa (`inserirEstudante(String cpf)`); validação de CPF com dígitos verificadores em `rh.Cpf` (B-23). Tratadores
+devolvem fichas imutáveis (`FichaDoLivro`, `FichaDaPessoa`, `FichaDoPapel`) dentro de `Resultado`, nunca a entidade.
 
 ## R8 — Abstract Factory  🟨 família em memória implementada (`persistencia`, `persistencia.memoria`); relacional na Fase 3
 | Papel | Classe |

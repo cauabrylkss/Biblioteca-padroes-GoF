@@ -36,7 +36,7 @@ Cada item = classes + teste `Rxx_` verde.
 ## Fase 2 — Persistência e circulação (qua 25/11 tarde)
 - [x] **R8 (memória)**: `FabricaDePersistencia`, `UnidadeDeTrabalho` (foto/restauração + trava única), repositórios em memória (guardam e devolvem cópias); `config.Aplicacao` + `PerfilDeExecucao` (8 testes).
 - [x] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
-- [ ] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente`.
+- [x] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente` (11 testes).
 - [ ] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando.
 - [ ] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit.
 - [ ] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada).
