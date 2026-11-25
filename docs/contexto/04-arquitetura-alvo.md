@@ -65,7 +65,7 @@ Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacot
   `EstadoLivro.de(SituacaoLivro)` (fábrica estática — estados são *stateless*, podem ser singletons).
 - `Devolvido.reservar(...)` não é sobrescrito → recusado (cenário R1-b).
 
-## R2 — Strategy
+## R2 — Strategy  ✅ implementado (`financeiro`)
 | Papel | Classe |
 |---|---|
 | Strategy | `PoliticaDeMulta { Dinheiro calcular(long diasAtraso); String codigo(); }` |
@@ -76,6 +76,10 @@ Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacot
 - Dinheiro: `BigDecimal` escala 2 (ou record `Dinheiro(long centavos)`). Nunca `float`.
 - `Multa` grava `valor` **e** `codigoPolitica` na emissão → trocar a política depois não recalcula.
 - Nova política = nova classe + registro na configuração; `ServicoDeMultas` intocado (alteração ao vivo).
+- Implementado: `ServicoDeMultas.emitirSeHouverAtraso(idEmprestimo, idEstudante, vencimento, dataDevolucao)` devolve
+  `Optional<Multa>` (vazio quando o valor é zero — no prazo ou dentro da tolerância). Armazenamento das multas e boleto
+  entram no R3; a chamada pelo ouvinte de multa, no R5. `PoliticaDeMulta.UM_REAL_POR_DIA` e
+  `PoliticaDeMulta.exigirDiasNaoNegativos` evitam que uma política dependa de outra.
 
 ## R3 — Adapter
 | Papel | Classe |
