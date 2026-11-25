@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Multa por devolução atrasada.
@@ -23,6 +24,7 @@ public class Multa {
     private final String codigoPolitica;
     private final LocalDate dataEmissao;
     private EstadoMulta estado;
+    private Boleto boleto;
 
     public Multa(long idEmprestimo, long idEstudante, long diasDeAtraso, BigDecimal valor, String codigoPolitica,
                  LocalDate dataEmissao) {
@@ -50,10 +52,28 @@ public class Multa {
         this.id = novoId;
     }
 
-    /** EMITIDA → QUITADA. Quitar duas vezes é erro; quem recebe notificações repetidas deve checar antes (R3). */
+    /** Associa o boleto registrado no banco (uma multa tem no máximo um boleto). */
+    public void vincularBoleto(Boleto novoBoleto) {
+        if (boleto != null) {
+            throw new IllegalStateException("A multa " + id + " já tem boleto");
+        }
+        this.boleto = Objects.requireNonNull(novoBoleto, "boleto");
+    }
+
+    public Optional<Boleto> getBoleto() {
+        return Optional.ofNullable(boleto);
+    }
+
+    /**
+     * EMITIDA → QUITADA (e o boleto, se houver, EMITIDO → PAGO). Quitar duas vezes é erro; quem recebe notificações
+     * repetidas do banco deve verificar antes (R3, {@code ServicoDeMultas.registrarPagamento}).
+     */
     public void quitar() {
         if (estaQuitada()) {
             throw new RegraDeNegocioException("A multa " + id + " já está quitada.");
+        }
+        if (boleto != null) {
+            boleto.registrarPagamento();
         }
         estado = EstadoMulta.QUITADA;
     }

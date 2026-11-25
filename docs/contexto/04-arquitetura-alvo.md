@@ -81,7 +81,7 @@ Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacot
   entram no R3; a chamada pelo ouvinte de multa, no R5. `PoliticaDeMulta.UM_REAL_POR_DIA` e
   `PoliticaDeMulta.exigirDiasNaoNegativos` evitam que uma política dependa de outra.
 
-## R3 — Adapter
+## R3 — Adapter  ✅ implementado (`financeiro.cobranca`, `banco`)
 | Papel | Classe |
 |---|---|
 | Target | `ServicoDeCobranca { ReciboCobranca emitir(SolicitacaoCobranca); NotificacaoPagamento traduzir(Object notificacaoBruta); }` |
@@ -90,8 +90,15 @@ Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacot
 | Client | `ServicoDeMultas` (sem nenhum `if` por banco) |
 
 - Banco da instalação escolhido em `config.Aplicacao` (propriedade `banco=A|B`).
-- Idempotência: `ServicoDeMultas.registrarPagamento(NotificacaoPagamento)` ignora se a multa já está `QUITADA` ou se o
-  `idNotificacao` já foi processado.
+- Idempotência: `ServicoDeMultas.registrarPagamento(String notificacaoBruta)` (traduz pelo adaptador) ignora se o
+  `idNotificacao` já foi processado **ou** se a multa já está `QUITADA`; método `synchronized`.
+- Implementado: Target `registrar(SolicitacaoCobranca) → CobrancaRegistrada` e `traduzirNotificacao(String) →
+  NotificacaoPagamento`. Formatos — A: centavos `long`, CPF 11 dígitos, nosso número/código `long`, status `1/2/9`,
+  notificação `evento=…;titulo=…;valorCentavos=…;status=…`; B: `"7,00"`, CPF `000.000.000-00`, referência
+  `MULTA-<id>`/id `B-000001`, `ABERTO/LIQUIDADO/BAIXADO`, notificação `SITUACAO|id|valor|evento`.
+- `Boleto` (EMITIDO → PAGO) pertence à `Multa`; `ConsultaDePagador` é a porta pela qual o Financeiro obtém nome/CPF do
+  estudante (Financeiro requer RH no diagrama de componentes). `RepositorioDeMultas` (memória por ora; família JDBC na
+  Fase 3). `BancoDaInstalacao.criar(banco)` devolve o adaptador + um `SimuladorDePagamento` para a CLI.
 
 ## R4 — Facade
 | Papel | Classe |
