@@ -79,5 +79,6 @@ componentes e implantação foram revisados conforme [docs/contexto/03-revisao-u
 | Claude Code (Claude Opus 5.5) | R1 State: pacote `biblioteca.livro` (Livro e os 7 estados), transações `Reserva`/`Emprestimo` e `R01StateTest`; guia `docs/estudo/R01-state.md`. |
 | Claude Code (Claude Opus 5.5) | R2 Strategy: pacote `financeiro` (políticas de multa, configuração administrativa, serviço de multas, `Multa`) e `R02StrategyTest`; guia `docs/estudo/R02-strategy.md`. |
 | Claude Code (Claude Opus 5.5) | R3 Adapter: bancos simulados (`banco`), contrato e adaptadores de cobrança (`financeiro.cobranca`), boleto e quitação idempotente no `ServicoDeMultas`, escolha do banco em `config`, `R03AdapterTest`; guia `docs/estudo/R03-adapter.md`. |
+| Claude Code (Claude Opus 5.5) | R10 Composite: árvore do acervo em `biblioteca.acervo` (grupos, itens, organização) e `R10CompositeTest`; guia `docs/estudo/R10-composite.md`. |
 
 Pedidos feitos e o que a equipe aceitou, corrigiu ou descartou: [REGISTRO_LLM.md](REGISTRO_LLM.md).

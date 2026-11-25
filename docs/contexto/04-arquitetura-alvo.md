@@ -189,16 +189,19 @@ Subclasses: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante` (pré-r
   acerto de cache **também é medido**.
 - `MetadadosLivro` **não tem estado** do livro. A fachada, ao reservar, lê o `Livro` do repositório (estado atual).
 
-## R10 — Composite
+## R10 — Composite  ✅ implementado (`biblioteca.acervo`)
 | Papel | Classe |
 |---|---|
 | Component | `NoDoAcervo` (abstrato: `int contarLivros()`, `List<Long> listarLivros()`) |
 | Composite | `GrupoDoAcervo` (`TipoGrupo` UNIDADE/SECAO/SUBSECAO; `adicionar`, `remover`, filhos) |
 | Leaf | `ItemDoAcervo(long idLivro)` |
-| Gerência | `OrganizacaoDoAcervo` (raiz + índice `idLivro → grupo`; `mover(idLivro, destino)`) |
+| Gerência | `OrganizacaoDoAcervo` (raiz `ACERVO` id 0; `criarGrupo`, `catalogar`, `mover(idLivro, destino)`, `retirar`, `grupoDoLivro`) |
 
-- `adicionar` recusa: grupo que é ancestral do destino (ciclo) e item cujo `idLivro` já está em outro grupo.
-- `mover` só realoca o `ItemDoAcervo`; não acessa `Livro` nem `Movimentacao`.
+- `adicionar` recusa: grupo que é ele mesmo ou ancestral do destino (ciclo), item cujo `idLivro` já está em qualquer
+  grupo da mesma árvore, e nó que já tem pai. As regras ficam **no próprio grupo** (não há índice separado: a busca
+  percorre a árvore a partir da raiz com `localizarItem`).
+- `mover` só realoca o mesmo `ItemDoAcervo`; se o destino recusar, o item volta à origem. Não acessa `Livro` nem
+  `Movimentacao`. `TipoGrupo` é informativo (profundidade variável; `ACERVO` reservado à raiz).
 
 ---
 
@@ -214,4 +217,4 @@ Subclasses: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante` (pré-r
 | R7 | `R07_estudanteDuplicadoRetornaExistente`, `R07_cpfNaoCadastradoFalhaAntesDeGravar` |
 | R8 | `R08_perfilTesteSoObjetosEmMemoria`, `R08_perfilProducaoRepositoriosMysqlMesmaUnidade` |
 | R9 | `R09_segundaConsultaUsaCacheEGeraMedicao`, `R09_cacheAntigoNaoAutorizaReserva` |
-| R10 | `R10_unidadeComDuasSecoesTotalCinco`, `R10_moverLivroNaoAlteraIdEstadoNemEmprestimo` |
+| R10 | `R10_unidadeComDuasSecoesTotalCinco`, `R10_moverLivroEntreSecoesNaoAlteraIdEstadoNemEmprestimo` |
