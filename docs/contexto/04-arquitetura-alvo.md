@@ -139,7 +139,7 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
   o aviso de devolução por `ServicoDeEmail` (simulado, `email.falhar=true` força falha). `OuvinteIndicadores` conta
   devoluções, atrasadas e dias de atraso (B-21). Registro em `config.Aplicacao.registrarOuvintes()`.
 
-## R6 — Command
+## R6 — Command  ✅ implementado (`biblioteca.circulacao`)
 | Papel | Classe |
 |---|---|
 | Command | `SolicitacaoDeCirculacao` (abstrata: `UUID id`, `String autor`, `Instant criadaEm`, `abstract Comprovante executar(FachadaDeCirculacao)`) |
@@ -149,6 +149,10 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
 | Client | CLI cria a solicitação → `TratadorDeEmprestimo.submeter(solicitacao)` → executor |
 
 Sem `desfazer`: circulação é fato registrado com efeitos externos (e-mail, boleto); correção é nova operação de domínio.
+- Implementado: `ExecutorDeSolicitacoes` usa `putIfAbsent` de um `CompletableFuture` (a execução acontece **fora** do
+  mapa, então ids diferentes não se bloqueiam); repetição devolve o mesmo comprovante ou a mesma exceção (C-03).
+  `iEmprestimo.solicitarReserva(SolicitacaoDeReserva)` e `renovarEmprestimo(SolicitacaoDeRenovacao)` mantêm os nomes
+  do Trabalho 02 recebendo o objeto-comando. Fábricas `SolicitacaoDeX.nova(autor, relogio, idLivro, idEstudante)`.
 
 ## R7 — Template Method  ✅ implementado (`cadastro`)
 ```java

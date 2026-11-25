@@ -46,7 +46,7 @@ class R04FacadeTest {
         CenarioDeTeste c = CenarioDeTeste.novo();
         c.livro(10, "Padrões de Projeto");
         iEmprestimo tratador = c.app.tratadorDeEmprestimo();
-        tratador.solicitarReserva(10, c.ana);
+        tratador.solicitarReserva(c.reserva(10, c.ana));
         assertThat(tratador.consultarReservaLivro(10, c.ana)).isPresent();
 
         ComprovanteEmprestimo comprovante = tratador.realizarEmprestimo(10, c.ana, c.bruno);
@@ -102,7 +102,7 @@ class R04FacadeTest {
     void R04_emprestimoParaOutroEstudanteRecusadoPeloEstadoDoLivro() {
         CenarioDeTeste c = CenarioDeTeste.novo();
         c.livro(10, "Padrões de Projeto");
-        c.app.tratadorDeEmprestimo().solicitarReserva(10, c.ana);
+        c.app.tratadorDeEmprestimo().solicitarReserva(c.reserva(10, c.ana));
 
         assertThatThrownBy(() -> c.app.tratadorDeEmprestimo().realizarEmprestimo(10, c.carla, c.bruno))
                 .hasMessageContaining("reservado para outro estudante");
@@ -113,7 +113,7 @@ class R04FacadeTest {
     void R04_emprestimoSemAtendenteCadastradoRecusado() {
         CenarioDeTeste c = CenarioDeTeste.novo();
         c.livro(10, "Padrões de Projeto");
-        c.app.tratadorDeEmprestimo().solicitarReserva(10, c.ana);
+        c.app.tratadorDeEmprestimo().solicitarReserva(c.reserva(10, c.ana));
 
         assertThatThrownBy(() -> c.app.tratadorDeEmprestimo().realizarEmprestimo(10, c.ana, 999))
                 .hasMessageContaining("Atendente não cadastrado");
@@ -137,7 +137,7 @@ class R04FacadeTest {
     @Test
     void R04_tratadoresDeCirculacaoDependemSoDaFachada() {
         assertThat(tiposDosCampos(TratadorDeEmprestimo.class))
-                .containsExactly(FachadaDeCirculacao.class);
+                .containsExactlyInAnyOrder(FachadaDeCirculacao.class, ExecutorDeSolicitacoes.class);
         assertThat(tiposDosCampos(TratadorDeDevolucao.class)).contains(FachadaDeCirculacao.class)
                 .doesNotContain(Movimentacao.class, Acervo.class, Relacionamento.class, Livro.class);
     }
