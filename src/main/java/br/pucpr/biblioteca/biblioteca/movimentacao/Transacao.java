@@ -5,11 +5,12 @@ import java.util.Objects;
 
 /**
  * Transação de circulação registrada em {@code Movimentacao}: base comum de {@link Reserva}, {@link Emprestimo} e
- * Devolucao (modelo do Trabalho 02).
+ * {@link Devolucao} (modelo do Trabalho 02). A classe é {@code sealed}: só esses três tipos existem, o que permite aos
+ * repositórios tratar cada um sem um {@code default} esquecido.
  *
  * <p>O identificador é atribuído uma única vez, pelo repositório, quando a transação é gravada.
  */
-public abstract class Transacao {
+public abstract sealed class Transacao permits Reserva, Emprestimo, Devolucao {
 
     private Long id;
     private final long idLivro;

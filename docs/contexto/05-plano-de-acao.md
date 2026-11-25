@@ -31,11 +31,11 @@ Cada item = classes + teste `Rxx_` verde.
 - [x] **R1 State**: `Livro`, `EstadoLivro` + 7 estados, `SituacaoLivro`, `TransicaoInvalidaException`, `Emprestimo.prorrogar` (branch `r01-state`, 19 testes).
 - [x] **R2 Strategy**: `PoliticaDeMulta` + 3, `ServicoDeMultas` (parte de cálculo), `ConfiguracaoAdministrativa`, `Multa` (branch `r02-strategy`, 7 testes).
 - [x] **R10 Composite**: `NoDoAcervo`, `GrupoDoAcervo`, `ItemDoAcervo`, `OrganizacaoDoAcervo` (branch `r10-composite`, 7 testes).
-- [ ] Entidades: `Pessoa`, `Papel`, `Estudante`, `Atendente`, `Devolucao` *(`Transacao`, `Reserva`, `Emprestimo` já feitas no R1 — restantes entram no R7/R4)*.
+- [x] Entidades: `Pessoa`, `Papel`, `Estudante`, `Atendente`, `Devolucao` *(feitas na Fase 2, junto do R7/R4; `Transacao` virou `sealed`)*.
 
 ## Fase 2 — Persistência e circulação (qua 25/11 tarde)
-- [ ] **R8 (memória)**: `FabricaDePersistencia`, `UnidadeDeTrabalho`, repositórios em memória; `config.Aplicacao` + `PerfilDeExecucao`.
-- [ ] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
+- [x] **R8 (memória)**: `FabricaDePersistencia`, `UnidadeDeTrabalho` (foto/restauração + trava única), repositórios em memória (guardam e devolvem cópias); `config.Aplicacao` + `PerfilDeExecucao` (8 testes).
+- [x] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
 - [ ] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente`.
 - [ ] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando.
 - [ ] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit.

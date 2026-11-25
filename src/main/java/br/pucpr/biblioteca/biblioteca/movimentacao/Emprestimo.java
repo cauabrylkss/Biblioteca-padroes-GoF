@@ -11,7 +11,7 @@ import java.util.Objects;
  * (guarda {@code numRenovacoes < 2}) e {@value #DIAS_POR_RENOVACAO} dias por renovação. A <b>guarda</b> é avaliada
  * pelos estados do livro (R1); este objeto apenas executa a <b>ação</b> {@link #prorrogar()}.
  */
-public class Emprestimo extends Transacao {
+public final class Emprestimo extends Transacao {
 
     public static final int LIMITE_RENOVACOES = 2;
     public static final int DIAS_POR_RENOVACAO = 30;
