@@ -69,18 +69,24 @@ E1–E9, atividades A1–A15, componentes C1–C8, implantação I1–I7, sequê
 - [x] `README.md`: requisitos, comando único (`mvnw test`), como subir MySQL, como rodar a CLI, perfis, roteiro da demo,
   ferramentas/modelos LLM usados e onde. *(Seção "Modelos UML" ajustada: os diagramas não foram refatorados.)*
 - [ ] Mesclar os PRs pendentes na `main` (#12 R9, PR da CLI) e conferir o README contra a `main`.
-- [x] `docs/RASTREABILIDADE.md`: R1–R10 ✅ com classes e testes. [ ] Conferência final de que cada classe citada existe.
+- [x] `docs/RASTREABILIDADE.md`: R1–R10 ✅. Conferida por script (25/11): toda classe e todo teste citados existem; os 5 testes que faltavam (2 do R1, 3 do R3) foram incluídos; coluna UML ajustada para A-09.
 - [ ] `REGISTRO_LLM.md`: preencher a coluna "aceito/corrigido/descartado" (16 linhas com _a preencher_) — **só a equipe**.
-- [ ] **Ensaio da demo cronometrado (≤ 5 min)** na máquina da apresentação: `mvnw test` →
+- [x] Guia da apresentação: [`docs/demo/APRESENTACAO.md`](../demo/APRESENTACAO.md) — checklist da máquina, roteiro de 5 min com tempos medidos, o que narrar em cada passo, as duas alterações ao vivo passo a passo, plano B e apoio à arguição.
+- [ ] **Ensaio da demo cronometrado (≤ 5 min)** na máquina da apresentação, seguindo o guia: `mvnw test` →
   `java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt` (ou digitando o fluxo) →
   alteração ao vivo. Conferir antes: MySQL rodando, `BIBLIOTECA_DB_SENHA` definida, acentos no terminal usado.
 - [ ] **Treino de arguição**: cada integrante explica os 10 padrões e as perguntas "Na arguição, saiba explicar" de `01-enunciado.md`.
 - [ ] **Treino de alteração ao vivo** (cada um faz pelo menos uma vez, < 3 min):
   - nova política de multa (ex. `PoliticaDobroAposDezDias`) → só nova classe + registro na configuração;
   - novo ouvinte da devolução (ex. `OuvinteAuditoria`) → só nova classe + `registrar` no composition root.
+  - *Conferido em 25/11:* as duas alterações exigem só a classe nova + 1 linha no `Aplicacao` e passam pela CLI
+    (multa R$ 14,00 com a política `dobro`; linha `[Auditoria]`). O teste `R05_novoOuvinteRegistradoSemAlterarTratadorNemFachada`
+    contava os ouvintes em valor absoluto e **quebraria ao vivo** — corrigido para contar relativo; `mvnw test` verde
+    com e sem as alterações. Código pronto no guia.
 
 ## Sex 27/11 manhã
-- [ ] `git clone` limpo em outra pasta → `mvnw test` verde → push final / tag `entrega` **antes das 09h40**.
+- [ ] `git clone` limpo da `main` em outra pasta → `mvnw test` verde → push final / tag `entrega` **antes das 09h40**.
+  *(Ensaio feito em 25/11 com a branch da CLI: clone limpo compila, 99 testes verdes, jar abre.)*
 
 ---
 
