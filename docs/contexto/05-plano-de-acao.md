@@ -33,13 +33,14 @@ Cada item = classes + teste `Rxx_` verde.
 - [x] **R10 Composite**: `NoDoAcervo`, `GrupoDoAcervo`, `ItemDoAcervo`, `OrganizacaoDoAcervo` (branch `r10-composite`, 7 testes).
 - [x] Entidades: `Pessoa`, `Papel`, `Estudante`, `Atendente`, `Devolucao` *(feitas na Fase 2, junto do R7/R4; `Transacao` virou `sealed`)*.
 
-## Fase 2 — Persistência e circulação (qua 25/11 tarde)
+## Fase 2 — Persistência e circulação (qua 25/11 tarde) ✅ (branch `fase2/persistencia-circulacao`, 38 testes novos; total 81)
 - [x] **R8 (memória)**: `FabricaDePersistencia`, `UnidadeDeTrabalho` (foto/restauração + trava única), repositórios em memória (guardam e devolvem cópias); `config.Aplicacao` + `PerfilDeExecucao` (8 testes).
 - [x] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
 - [x] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente` (11 testes).
 - [x] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando (7 testes).
 - [x] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit (6 testes).
-- [ ] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada).
+- [x] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada) (6 testes).
+- [x] Commits em branches empilhadas por padrão: `r08-abstract-factory` → `r07-template-method` → `r04-facade` → `r05-observer` → `r06-command`. [ ] Push + PRs.
 
 ## Fase 3 — Integrações e produção (qui 26/11 manhã)
 - [x] **R3 Adapter**: `BancoAApi`, `BancoBApi` (simulados), `ServicoDeCobranca`, `AdaptadorBancoA/B`, quitação idempotente (branch `r03-adapter`, 8 testes; adiantado para depois do R2 por dependência).

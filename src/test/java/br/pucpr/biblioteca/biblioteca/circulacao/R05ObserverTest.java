@@ -103,7 +103,7 @@ class R05ObserverTest {
         c.emprestar(LIVRO, c.ana);
         c.app.tratadorDeDevolucao().registrarDevolucao(LIVRO, c.ana, c.bruno);
 
-        assertThatThrownBy(() -> c.app.tratadorDeEmprestimo().solicitarReserva(LIVRO, c.carla))
+        assertThatThrownBy(() -> c.app.tratadorDeEmprestimo().solicitarReserva(c.reserva(LIVRO, c.carla)))
                 .hasMessageContaining("DEVOLVIDO");
 
         ComprovanteDeSituacao inspecao = c.app.tratadorDeDevolucao().inspecionarLivro(LIVRO, true);

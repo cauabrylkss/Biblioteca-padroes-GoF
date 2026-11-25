@@ -5,6 +5,7 @@ import br.pucpr.biblioteca.academico.TratadorDeEstudante;
 import br.pucpr.biblioteca.academico.iEstudante;
 import br.pucpr.biblioteca.biblioteca.acervo.Acervo;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
+import br.pucpr.biblioteca.biblioteca.circulacao.ExecutorDeSolicitacoes;
 import br.pucpr.biblioteca.biblioteca.circulacao.FachadaDeCirculacao;
 import br.pucpr.biblioteca.biblioteca.circulacao.FilaDeInspecao;
 import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteEmail;
@@ -61,7 +62,7 @@ import java.util.Properties;
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
  *   <li><b>R5</b> — ouvintes da devolução, na ordem inspeção → multa → indicadores → e-mail (C-06).
  *       <i>Novo ouvinte = nova classe + um {@code publicador.registrar(...)} em {@link #registrarOuvintes()}.</i></li>
- *   <li><b>R4/R7</b> — fachada, cadastros e tratadores.</li>
+ *   <li><b>R4/R6/R7</b> — fachada, executor de solicitações, cadastros e tratadores.</li>
  * </ul>
  * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
  * {@code iAtendente}, {@code iEmprestimo}, {@code iDevolucao}).
@@ -121,17 +122,18 @@ public final class Aplicacao {
         this.email = new ServicoDeEmailSimulado(Boolean.parseBoolean(propriedade("email.falhar", "false")));
         registrarOuvintes();
 
-        // R4
+        // R4 + R6
         int prazo = Integer.parseInt(propriedade("emprestimo.prazo.dias", "30"));
         FachadaDeCirculacao fachada = new FachadaDeCirculacao(relacionamento, movimentacao, acervo, unidadeDeTrabalho,
                 publicador, filaDeInspecao, relogio, prazo);
+        ExecutorDeSolicitacoes executor = new ExecutorDeSolicitacoes(fachada);
 
         // R7 + tratadores
         this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho);
         this.tratadorDePessoa = new TratadorDePessoa(new CadastroDePessoa(relacionamento, relogio), relacionamento);
         this.tratadorDeEstudante = new TratadorDeEstudante(new CadastroDeEstudante(relacionamento), relacionamento);
         this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
-        this.tratadorDeEmprestimo = new TratadorDeEmprestimo(fachada);
+        this.tratadorDeEmprestimo = new TratadorDeEmprestimo(fachada, executor);
         this.tratadorDeDevolucao = new TratadorDeDevolucao(fachada, servicoDeMultas, filaDeInspecao);
     }
 

@@ -1,6 +1,8 @@
 package br.pucpr.biblioteca;
 
 import br.pucpr.biblioteca.biblioteca.circulacao.ComprovanteEmprestimo;
+import br.pucpr.biblioteca.biblioteca.circulacao.SolicitacaoDeRenovacao;
+import br.pucpr.biblioteca.biblioteca.circulacao.SolicitacaoDeReserva;
 import br.pucpr.biblioteca.compartilhado.RelogioAjustavel;
 import br.pucpr.biblioteca.config.Aplicacao;
 import java.time.LocalDate;
@@ -52,10 +54,18 @@ public final class CenarioDeTeste {
         app.tratadorDeAcervo().inserirLivro(id, titulo, null);
     }
 
+    public SolicitacaoDeReserva reserva(long idLivro, long idEstudante) {
+        return SolicitacaoDeReserva.nova("estudante " + idEstudante, relogio, idLivro, idEstudante);
+    }
+
+    public SolicitacaoDeRenovacao renovacao(long idLivro, long idEstudante) {
+        return SolicitacaoDeRenovacao.nova("estudante " + idEstudante, relogio, idLivro, idEstudante);
+    }
+
     /** Cadastra o livro, reserva para o estudante e efetiva o empréstimo com o atendente Bruno. */
     public ComprovanteEmprestimo emprestar(long idLivro, long idEstudante) {
         livro(idLivro, "Livro " + idLivro);
-        app.tratadorDeEmprestimo().solicitarReserva(idLivro, idEstudante);
+        app.tratadorDeEmprestimo().solicitarReserva(reserva(idLivro, idEstudante));
         return app.tratadorDeEmprestimo().realizarEmprestimo(idLivro, idEstudante, bruno);
     }
 }
