@@ -100,7 +100,7 @@ Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacot
   estudante (Financeiro requer RH no diagrama de componentes). `RepositorioDeMultas` (memória por ora; família JDBC na
   Fase 3). `BancoDaInstalacao.criar(banco)` devolve o adaptador + um `SimuladorDePagamento` para a CLI.
 
-## R4 — Facade
+## R4 — Facade  ✅ implementado (`biblioteca.circulacao`, `biblioteca.tratadores`)
 | Papel | Classe |
 |---|---|
 | Facade | `FachadaDeCirculacao` |
@@ -114,6 +114,14 @@ Operações → comprovantes (records imutáveis): `reservar → ComprovanteRese
 Movimentacao busca **reserva ativa** do par → Acervo busca Livro → `livro.emprestar(idEstudante)` (State) →
 Movimentacao remove reserva e insere `Emprestimo` (vencimento +N dias) → repositório salva Livro → `uow.confirmar()`.
 Qualquer exceção → `uow.desfazer()` (nada fica parcial).
+
+- Implementado: todas as operações de circulação (C-01) + consultas (`consultarReserva/Emprestimo/Devolucao`), todas
+  devolvendo `Comprovante` (interface `sealed`) ou `Optional` de comprovante. Inspeção, reparo e laudo devolvem um único
+  record `ComprovanteDeSituacao(operacao, idLivro, situacaoAnterior, situacaoLivro, data)` (em vez de um
+  `ComprovanteInspecao` próprio). `efetivarEmprestimo` busca a reserva **do livro** e deixa a guarda
+  "mesmo estudante" para `Reservado.emprestar` (R1). Só o estudante do empréstimo renova/devolve
+  (`Emprestimo.exigirEstudante`). Transação: `UnidadeDeTrabalho.executar(...)` (try → confirmar; catch → desfazer).
+  Laudo irrecuperável também retira o livro da árvore do acervo (B-19).
 
 ## R5 — Observer
 | Papel | Classe |

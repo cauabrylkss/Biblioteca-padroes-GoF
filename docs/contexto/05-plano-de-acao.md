@@ -37,7 +37,7 @@ Cada item = classes + teste `Rxx_` verde.
 - [x] **R8 (memória)**: `FabricaDePersistencia`, `UnidadeDeTrabalho` (foto/restauração + trava única), repositórios em memória (guardam e devolvem cópias); `config.Aplicacao` + `PerfilDeExecucao` (8 testes).
 - [x] Pontos de acesso `Acervo`, `Relacionamento`, `Movimentacao` sobre os repositórios.
 - [x] **R7 Template Method**: `CadastroTemplate` + 4 cadastros; tratadores `TratadorDeAcervo/Pessoa/Estudante/Atendente` (11 testes).
-- [ ] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando.
+- [x] **R4 Facade**: `FachadaDeCirculacao` + comprovantes; `TratadorDeEmprestimo`, `TratadorDeDevolucao` delegando (7 testes).
 - [ ] **R5 Observer**: `PublicadorDeDevolucao`, `EventoDevolucao`, 4 ouvintes; publicação pós-commit.
 - [ ] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada).
 
