@@ -4,6 +4,11 @@ import br.pucpr.biblioteca.academico.Estudante;
 import br.pucpr.biblioteca.academico.TratadorDeEstudante;
 import br.pucpr.biblioteca.academico.iEstudante;
 import br.pucpr.biblioteca.biblioteca.acervo.Acervo;
+import br.pucpr.biblioteca.biblioteca.acervo.ConsultaAcervo;
+import br.pucpr.biblioteca.biblioteca.acervo.ConsultaAcervoPadrao;
+import br.pucpr.biblioteca.biblioteca.acervo.ConsultaComCache;
+import br.pucpr.biblioteca.biblioteca.acervo.ConsultaComMedicao;
+import br.pucpr.biblioteca.biblioteca.acervo.Medidor;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
 import br.pucpr.biblioteca.biblioteca.circulacao.ExecutorDeSolicitacoes;
 import br.pucpr.biblioteca.biblioteca.circulacao.FachadaDeCirculacao;
@@ -64,6 +69,8 @@ import java.util.Properties;
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
  *   <li><b>R5</b> — ouvintes da devolução, na ordem inspeção → multa → indicadores → e-mail (C-06).
  *       <i>Novo ouvinte = nova classe + um {@code publicador.registrar(...)} em {@link #registrarOuvintes()}.</i></li>
+ *   <li><b>R9</b> — cadeia de decoradores da consulta ao acervo ({@code consulta.medicao}, {@code consulta.cache}),
+ *       na ordem fixa Medição(Cache(Padrão)) ({@link #montarConsultaAcervo()}).</li>
  *   <li><b>R4/R6/R7</b> — fachada, executor de solicitações, cadastros e tratadores.</li>
  * </ul>
  * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
@@ -83,6 +90,10 @@ public final class Aplicacao {
     private final Relacionamento relacionamento;
     private final Movimentacao movimentacao;
     private final Acervo acervo;
+
+    // consulta ao acervo (R9)
+    private final Medidor medidorDaConsulta = new Medidor();
+    private final ConsultaAcervo consultaAcervo;
 
     // financeiro
     private final ConfiguracaoAdministrativa configuracaoDeMultas;
@@ -116,6 +127,9 @@ public final class Aplicacao {
         this.movimentacao = new Movimentacao(fabrica.movimentacao());
         this.acervo = new Acervo(fabrica.livros(), new OrganizacaoDoAcervo());
 
+        // R9
+        this.consultaAcervo = montarConsultaAcervo();
+
         // R2 + R3
         this.configuracaoDeMultas =
                 new ConfiguracaoAdministrativa(politicasDeMulta(), propriedade("multa.politica", PoliticaOriginal.CODIGO));
@@ -134,7 +148,8 @@ public final class Aplicacao {
         ExecutorDeSolicitacoes executor = new ExecutorDeSolicitacoes(fachada);
 
         // R7 + tratadores
-        this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho);
+        this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho,
+                consultaAcervo);
         this.tratadorDePessoa = new TratadorDePessoa(new CadastroDePessoa(relacionamento, relogio), relacionamento);
         this.tratadorDeEstudante = new TratadorDeEstudante(new CadastroDeEstudante(relacionamento), relacionamento);
         this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
@@ -184,6 +199,21 @@ public final class Aplicacao {
             case TESTE -> new FabricaEmMemoria();
             case PRODUCAO -> new FabricaRelacional(ConfiguracaoDoBanco.doAmbiente(urlPadraoDoBanco));
         };
+    }
+
+    /**
+     * R9: monta a cadeia de decoradores conforme a instalação. A ordem é fixa — a medição fica por fora do cache para
+     * medir também as consultas respondidas pelo cache (C-09). Novo recurso = novo decorador + uma linha aqui.
+     */
+    private ConsultaAcervo montarConsultaAcervo() {
+        ConsultaAcervo consulta = new ConsultaAcervoPadrao(acervo);
+        if (Boolean.parseBoolean(propriedade("consulta.cache", "true"))) {
+            consulta = new ConsultaComCache(consulta);
+        }
+        if (Boolean.parseBoolean(propriedade("consulta.medicao", "true"))) {
+            consulta = new ConsultaComMedicao(consulta, medidorDaConsulta);
+        }
+        return consulta;
     }
 
     /** R2: políticas que o administrador pode escolher. Nova política → acrescentar aqui. */
@@ -278,6 +308,15 @@ public final class Aplicacao {
 
     public ServicoDeEmailSimulado email() {
         return email;
+    }
+
+    /** A cadeia montada (R9), para administração/demonstração e testes. */
+    public ConsultaAcervo consultaAcervo() {
+        return consultaAcervo;
+    }
+
+    public Medidor medidorDaConsulta() {
+        return medidorDaConsulta;
     }
 
     public OrganizacaoDoAcervo organizacaoDoAcervo() {
