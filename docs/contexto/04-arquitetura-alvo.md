@@ -35,8 +35,9 @@ br.pucpr.biblioteca
 ├── persistencia/          FabricaDePersistencia, UnidadeDeTrabalho, Repositorio* (R8)
 │   ├── memoria/           FabricaEmMemoria + repositórios/UoW em memória
 │   └── jdbc/              FabricaRelacional (MySQL) + repositórios/UoW JDBC, schema.sql
-├── interfaceusuario/      CLI (só chama tratadores)
-└── config/                Aplicacao (composition root), PerfilDeExecucao, ConfiguracaoAdministrativa
+├── interfaceusuario/      InterfaceCli, EntradaSaida (roteiro), Tratadores, OpcoesDaLinhaDeComando (só chama tratadores)
+└── config/                Aplicacao (composition root), PerfilDeExecucao, BancoDaInstalacao, DadosDeExemplo,
+                           iAdministracao/TratadorDeAdministracao (Administrador + ferramentas da demonstração)
 ```
 Decisão de modelagem: **um único `Relacionamento`** (no RH), exposto por `iPessoa`/`iAtendente`; o Acadêmico
 requer `iPessoa`. Corrige a duplicação C5.

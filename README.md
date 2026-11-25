@@ -11,7 +11,8 @@ GoF** exigidos no trabalho de Modelagem de Sistemas Computacionais (PUCPR, Prof.
 ## Requisitos
 - **JDK 21 ou superior** (desenvolvido com o JDK 25; o bytecode é Java 21) com `JAVA_HOME` configurado.
 - Maven **não** precisa estar instalado: o projeto traz o Maven Wrapper (`mvnw` / `mvnw.cmd`).
-- **MySQL 8** apenas para o perfil de produção (os testes não usam banco).
+- **MySQL 8** para a interface no perfil padrão (produção). Os testes não usam banco; sem MySQL, a interface roda
+  com `--perfil=memoria`.
 
 ## Compilar e rodar os testes (comando único)
 ```bash
@@ -23,16 +24,37 @@ Testes de integração com MySQL real (marcados `@Tag("mysql")`) só rodam com `
 
 ## Executar a interface (CLI)
 ```bash
-./mvnw package                      # gera target/biblioteca.jar (também roda os testes)
-java -jar target/biblioteca.jar     # perfil em memória, com dados de exemplo
-java -Dperfil=producao -jar target/biblioteca.jar   # perfil de produção (MySQL)
+./mvnw package                                   # gera target/biblioteca.jar (também roda os testes)
+java -jar target/biblioteca.jar                  # perfil de produção (MySQL) — padrão
+java -jar target/biblioteca.jar --reiniciar-dados   # apaga os dados do MySQL e recria os de exemplo
+java -jar target/biblioteca.jar --perfil=memoria    # sem banco (plano B): dados só nesta execução
+java -jar target/biblioteca.jar --ajuda
 ```
-Atalho sem empacotar: `./mvnw compile exec:java`.
+Atalho sem empacotar: `./mvnw compile exec:java -Dexec.args="--perfil=memoria"`.
+
+A CLI pergunta **"operar como"** (Estudante, Atendente, Administrador ou Ferramentas da demonstração) — não há login.
+Com o banco vazio são cadastrados dados de exemplo: estudantes **Ana (1)** e **Carla (2)**, atendente **Bruno (1)**,
+livros **1 a 5** organizados em unidade/seções/subseção. As ferramentas da demonstração avançam o relógio (para
+simular atraso), simulam o pagamento de um boleto no banco e mostram a caixa de saída de e-mails.
+
+### Roteiro da demonstração
+[docs/demo/roteiro-demo.txt](docs/demo/roteiro-demo.txt) responde as perguntas da CLI na ordem do fluxo pedido no
+enunciado: **reserva → empréstimo → renovação → devolução atrasada → multa** (+ inspeção, pagamento do boleto e
+quitação). Depois da última linha, a CLI volta para o teclado.
+```bash
+java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt
+```
+O mesmo roteiro é executado pelo teste `InterfaceCliTest` (perfil em memória).
 
 ## Perfil de produção (MySQL)
 1. No MySQL Workbench, execute uma vez [docs/mysql/criar-banco.sql](docs/mysql/criar-banco.sql), trocando a senha.
-2. Defina as variáveis de ambiente `BIBLIOTECA_DB_USUARIO` e `BIBLIOTECA_DB_SENHA` (opcional: `BIBLIOTECA_DB_URL`).
-3. Rode com `-Dperfil=producao`. As tabelas são criadas automaticamente na primeira execução.
+2. Defina as variáveis de ambiente `BIBLIOTECA_DB_USUARIO` e `BIBLIOTECA_DB_SENHA` (opcional: `BIBLIOTECA_DB_URL`)
+   e abra um terminal novo.
+3. Rode `java -jar target/biblioteca.jar`. As tabelas são criadas automaticamente na primeira execução.
+
+Ficam só em memória (recomeçam a cada execução): a fila de pendências de inspeção, os indicadores de devolução, o
+registro de solicitações já executadas (R6), a organização do acervo (recriada com os livros de exemplo) e os bancos
+simulados (que continuam a numeração dos boletos já gravados).
 
 ## Configuração
 Valores padrão em [src/main/resources/application.properties](src/main/resources/application.properties); qualquer chave
@@ -80,5 +102,8 @@ componentes e implantação foram revisados conforme [docs/contexto/03-revisao-u
 | Claude Code (Claude Opus 5.5) | R2 Strategy: pacote `financeiro` (políticas de multa, configuração administrativa, serviço de multas, `Multa`) e `R02StrategyTest`; guia `docs/estudo/R02-strategy.md`. |
 | Claude Code (Claude Opus 5.5) | R3 Adapter: bancos simulados (`banco`), contrato e adaptadores de cobrança (`financeiro.cobranca`), boleto e quitação idempotente no `ServicoDeMultas`, escolha do banco em `config`, `R03AdapterTest`; guia `docs/estudo/R03-adapter.md`. |
 | Claude Code (Claude Opus 5.5) | R10 Composite: árvore do acervo em `biblioteca.acervo` (grupos, itens, organização) e `R10CompositeTest`; guia `docs/estudo/R10-composite.md`. |
+| Claude Code (Claude Opus 5.5) | R7 Template Method, R4 Facade, R5 Observer, R6 Command e R8 (memória): cadastros, fachada de circulação, ouvintes da devolução, solicitações e persistência em memória, com os testes `R04`–`R08` e os guias `docs/estudo/`. |
+| Claude Code (Claude Opus 5.5) | R8 relacional: pacote `persistencia.jdbc` (MySQL), `schema.sql`, `R08MySqlIntegracaoTest`. R9 Decorator: consulta ao acervo com medição e cache, `R09DecoratorTest`. |
+| Claude Code (Claude Opus 5.5) | Interface CLI (`interfaceusuario`), `iAdministracao`, dados de exemplo, roteiro da demonstração, e-mails de boleto/quitação e numeração do banco simulado; `InterfaceCliTest`. |
 
 Pedidos feitos e o que a equipe aceitou, corrigiu ou descartou: [REGISTRO_LLM.md](REGISTRO_LLM.md).

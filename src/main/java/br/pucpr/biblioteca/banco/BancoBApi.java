@@ -32,6 +32,11 @@ public class BancoBApi {
     private final AtomicLong proximoEvento = new AtomicLong(1);
     private final Map<String, BoletoB> boletos = new LinkedHashMap<>();
 
+    /** Continua a numeração depois do maior número já usado (ver {@code BancoAApi.continuarNumeracaoApos}, D-12). */
+    public void continuarNumeracaoApos(long ultimoNumeroUsado) {
+        proximoId.accumulateAndGet(ultimoNumeroUsado + 1, Math::max);
+    }
+
     /** Cria um boleto. */
     public synchronized String criarBoleto(String referencia, String valorReais, String documentoPagador) {
         if (valorReais == null || !valorReais.matches("\\d+,\\d{2}")) {

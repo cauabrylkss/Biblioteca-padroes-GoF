@@ -1,16 +1,23 @@
 package br.pucpr.biblioteca;
 
+import br.pucpr.biblioteca.compartilhado.RelogioAjustavel;
+import br.pucpr.biblioteca.config.Aplicacao;
+import br.pucpr.biblioteca.interfaceusuario.EntradaSaida;
+import br.pucpr.biblioteca.interfaceusuario.InterfaceCli;
+import br.pucpr.biblioteca.interfaceusuario.OpcoesDaLinhaDeComando;
+import br.pucpr.biblioteca.interfaceusuario.Tratadores;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 /**
- * Ponto de entrada da aplicação de linha de comando.
+ * Ponto de entrada da aplicação de linha de comando ({@code java -jar target/biblioteca.jar}, E-07).
  *
- * <p>Fase 0: apenas confirma que o projeto compila e empacota. Nas próximas fases, {@code Main} vai pedir ao
- * composition root ({@code config.Aplicacao}) os tratadores já montados e entregá-los à CLI
- * ({@code interfaceusuario}). {@code Main} não contém regra de negócio.
+ * <p>Lê as opções, pede ao composition root ({@link Aplicacao}) a aplicação montada — o perfil escolhe a família de
+ * persistência uma única vez (R8) —, prepara os dados de exemplo e entrega à CLI <b>só os tratadores</b>.
+ * {@code Main} não contém regra de negócio.
  */
 public final class Main {
 
@@ -19,7 +26,42 @@ public final class Main {
 
     public static void main(String[] args) {
         usarUtf8NoConsole();
+        OpcoesDaLinhaDeComando opcoes;
+        try {
+            opcoes = OpcoesDaLinhaDeComando.de(args);
+        } catch (IllegalArgumentException e) {
+            System.err.println(e.getMessage());
+            System.out.println(OpcoesDaLinhaDeComando.AJUDA);
+            System.exit(2);
+            return;
+        }
+        if (opcoes.ajuda()) {
+            System.out.println(OpcoesDaLinhaDeComando.AJUDA);
+            return;
+        }
         System.out.println(mensagemDeAbertura());
+
+        Properties propriedades = Aplicacao.carregarPropriedades();
+        opcoes.perfil().ifPresent(perfil -> propriedades.setProperty("perfil", perfil));
+        RelogioAjustavel relogio = RelogioAjustavel.agoraDoSistema();     // ajustável: "avançar o relógio" (C-11)
+
+        Aplicacao app;
+        EntradaSaida entradaSaida;
+        try {
+            app = Aplicacao.montar(propriedades, relogio);
+            app.prepararParaUso(opcoes.reiniciarDados());
+            entradaSaida = EntradaSaida.doConsole(opcoes.roteiro());
+        } catch (RuntimeException falha) {
+            System.err.println("Não foi possível iniciar: " + falha.getMessage());
+            System.err.println("Para usar sem MySQL: java -jar target/biblioteca.jar --perfil=memoria");
+            System.exit(1);
+            return;
+        }
+
+        Tratadores tratadores = new Tratadores(app.tratadorDeAcervo(), app.tratadorDePessoa(),
+                app.tratadorDeEstudante(), app.tratadorDeAtendente(), app.tratadorDeEmprestimo(),
+                app.tratadorDeDevolucao(), app.tratadorDeAdministracao());
+        new InterfaceCli(tratadores, relogio, entradaSaida).executar();
     }
 
     /**
@@ -32,6 +74,6 @@ public final class Main {
     }
 
     static String mensagemDeAbertura() {
-        return "Sistema de Biblioteca (padrões GoF) — em construção.";
+        return "Sistema de Biblioteca (padrões GoF) — PUCPR";
     }
 }

@@ -1,0 +1,61 @@
+# Roteiro da demonstração pela interface (enunciado, item 2):
+#   reserva → empréstimo → renovação → devolução atrasada → multa (+ inspeção e pagamento do boleto)
+#
+# Uso (MySQL, com os dados de exemplo recriados — necessário para os ids abaixo e o boleto 1001):
+#   java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt
+# Plano B, sem MySQL:
+#   java -jar target/biblioteca.jar --perfil=memoria --roteiro=docs/demo/roteiro-demo.txt
+#
+# Cada linha é uma resposta, como se fosse digitada. Depois da última, a CLI volta para o teclado.
+# Dados de exemplo: estudante Ana = 1, atendente Bruno = 1, livro 1 = "Padrões de Projeto".
+
+1           # Operar como: Estudante
+1           # Id do estudante: Ana
+2           # Consultar livro
+1           #   livro 1 → título (consulta ao acervo) + situação atual LIVRE
+3           # Solicitar reserva (Command R6 → fachada R4 → estado R1)
+1           #   livro 1 → RESERVADO
+2           # Consultar livro de novo
+1           #   título vem do cache (R9), situação atual RESERVADO vem do repositório
+0           # Voltar
+
+2           # Operar como: Atendente
+1           # Id do atendente: Bruno
+1           # Realizar empréstimo (só a partir de RESERVADO, pelo mesmo estudante)
+1           #   livro 1
+1           #   estudante Ana → EMPRESTADO, vence em 30 dias
+0           # Voltar
+
+1           # Operar como: Estudante
+1           # Ana
+5           # Renovar empréstimo (guarda numRenovacoes < 2; +30 dias)
+1           #   livro 1 → RENOVADO
+0           # Voltar
+
+4           # Ferramentas da demonstração
+1           # Avançar o relógio
+65          #   vencimento era +60 dias → 5 dias de atraso
+0           # Voltar
+
+2           # Operar como: Atendente
+1           # Bruno
+2           # Registrar devolução → DEVOLVIDO; ouvintes (R5): inspeção, multa + boleto (R2/R3), indicadores, e-mail
+1           #   livro 1
+1           #   estudante Ana → multa de R$ 5,00 (política original), boleto 1001 no Banco A
+3           # Inspecionar livro devolvido (comando do atendente)
+1           #   livro 1
+s           #   em bom estado → LIVRE
+0           # Voltar
+
+4           # Ferramentas da demonstração
+3           # Simular pagamento de boleto: banco notifica o Financeiro (Adapter R3)
+1001        #   → boleto PAGO, multa QUITADA, estudante avisado
+3           # Mesma operação de novo: a quitação não acontece duas vezes
+1001
+4           # Caixa de saída de e-mails (boleto, devolução, quitação)
+0           # Voltar
+
+3           # Operar como: Administrador
+4           # Medições da consulta ao acervo (R9): 2 consultas medidas, a 2ª respondida pelo cache
+5           # Indicadores de devolução (R5)
+0           # Voltar

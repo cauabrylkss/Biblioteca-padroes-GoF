@@ -50,6 +50,15 @@ public class RepositorioDeMultasEmMemoria implements RepositorioDeMultas {
     }
 
     @Override
+    public synchronized List<String> identificadoresDeBoleto(String banco) {
+        return multas.values().stream()
+                .flatMap(m -> m.getBoleto().stream())
+                .filter(b -> b.getBanco().equals(banco))
+                .map(b -> b.getIdentificadorNoBanco())
+                .toList();
+    }
+
+    @Override
     public synchronized boolean registrarNotificacaoProcessada(String banco, String idNotificacao) {
         return notificacoesProcessadas.add(banco + ":" + idNotificacao);
     }

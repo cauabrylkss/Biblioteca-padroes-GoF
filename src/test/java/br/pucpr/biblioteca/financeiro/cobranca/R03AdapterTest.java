@@ -190,4 +190,57 @@ class R03AdapterTest {
                 .noneMatch(t -> t.getPackageName().equals("br.pucpr.biblioteca.banco"))
                 .noneMatch(t -> t == AdaptadorBancoA.class || t == AdaptadorBancoB.class);
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Quitação avisada por e-mail (B-16) e numeração do banco simulado (D-12)
+    // ---------------------------------------------------------------------------------------------
+
+    @Test
+    void R03_boletoEQuitacaoSaoEnviadosAoEstudantePorEmail() {
+        List<String> assuntos = new ArrayList<>();
+        ConfiguracaoAdministrativa configuracao =
+                new ConfiguracaoAdministrativa(List.of(new PoliticaOriginal()), PoliticaOriginal.CODIGO);
+        BancoConfigurado instalacao = BancoDaInstalacao.criar("A");
+        ServicoDeMultas servico = new ServicoDeMultas(configuracao, new RepositorioDeMultasEmMemoria(),
+                instalacao.cobranca(), ANA, (idEstudante, assunto, texto) -> assuntos.add(assunto));
+
+        Multa multa = servico.emitirSeHouverAtraso(ID_EMPRESTIMO, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        servico.registrarPagamento(instalacao.simulador().pagar(multa.getBoleto().orElseThrow().getIdentificadorNoBanco()));
+
+        assertThat(assuntos).containsExactly("Boleto da multa", "Multa quitada");
+    }
+
+    @Test
+    void R03_emailForaDoArNaoImpedeEmissaoNemQuitacao() {
+        ConfiguracaoAdministrativa configuracao =
+                new ConfiguracaoAdministrativa(List.of(new PoliticaOriginal()), PoliticaOriginal.CODIGO);
+        BancoConfigurado instalacao = BancoDaInstalacao.criar("B");
+        ServicoDeMultas servico = new ServicoDeMultas(configuracao, new RepositorioDeMultasEmMemoria(),
+                instalacao.cobranca(), ANA, (idEstudante, assunto, texto) -> {
+                    throw new IllegalStateException("SMTP fora do ar");
+                });
+
+        Multa multa = servico.emitirSeHouverAtraso(ID_EMPRESTIMO, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        String notificacao = instalacao.simulador().pagar(multa.getBoleto().orElseThrow().getIdentificadorNoBanco());
+
+        assertThat(servico.registrarPagamento(notificacao)).isEqualTo(ResultadoDaNotificacao.MULTA_QUITADA);
+        assertThat(servico.buscarMulta(multa.getId()).orElseThrow().getEstado()).isEqualTo(EstadoMulta.QUITADA);
+    }
+
+    @Test
+    void R03_bancoSimuladoContinuaANumeracaoDosBoletosJaGravados() {
+        SolicitacaoCobranca cobranca = new SolicitacaoCobranca(1, new BigDecimal("7.00"), "123.456.789-09", "Ana Souza");
+
+        BancoConfigurado bancoA = BancoDaInstalacao.criar("A");
+        bancoA.simulador().continuarNumeracaoApos(List.of("1001", "1007", "1003"));
+        assertThat(bancoA.cobranca().registrar(cobranca).identificadorNoBanco()).isEqualTo("1008");
+
+        BancoConfigurado bancoB = BancoDaInstalacao.criar("B");
+        bancoB.simulador().continuarNumeracaoApos(List.of("B-000001", "B-000004"));
+        assertThat(bancoB.cobranca().registrar(cobranca).identificadorNoBanco()).isEqualTo("B-000005");
+
+        BancoConfigurado semHistorico = BancoDaInstalacao.criar("A");
+        semHistorico.simulador().continuarNumeracaoApos(List.of());
+        assertThat(semHistorico.cobranca().registrar(cobranca).identificadorNoBanco()).isEqualTo("1001");
+    }
 }

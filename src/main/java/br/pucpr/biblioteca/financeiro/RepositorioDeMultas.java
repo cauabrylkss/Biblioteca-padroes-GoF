@@ -18,6 +18,9 @@ public interface RepositorioDeMultas {
     /** Multa emitida para o empréstimo (no máximo uma: um empréstimo tem uma única devolução). */
     Optional<Multa> buscarPorEmprestimo(long idEmprestimo);
 
+    /** Identificadores de boleto já emitidos no banco informado (para o banco simulado não repeti-los, D-12). */
+    List<String> identificadoresDeBoleto(String banco);
+
     /**
      * Marca uma notificação de pagamento como processada.
      *

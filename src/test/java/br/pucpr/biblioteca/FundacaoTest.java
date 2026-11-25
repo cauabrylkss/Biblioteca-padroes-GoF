@@ -15,12 +15,12 @@ class FundacaoTest {
     }
 
     @Test
-    void configuracaoPadraoUsaPerfilEmMemoria() throws Exception {
+    void configuracaoPadraoDaCliUsaPerfilProducao() throws Exception {
         Properties props = new Properties();
         try (InputStream in = getClass().getResourceAsStream("/application.properties")) {
             assertThat(in).as("application.properties no classpath").isNotNull();
             props.load(in);
         }
-        assertThat(props.getProperty("perfil")).isEqualTo("memoria");
+        assertThat(props.getProperty("perfil")).isEqualTo("producao");   // D-09: a demo roda em MySQL
     }
 }
