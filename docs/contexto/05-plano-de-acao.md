@@ -42,7 +42,7 @@ Cada item = classes + teste `Rxx_` verde.
 - [ ] **R6 Command**: `SolicitacaoDeCirculacao`, `SolicitacaoDeReserva/Renovacao`, `ExecutorDeSolicitacoes` (concorrência testada).
 
 ## Fase 3 — Integrações e produção (qui 26/11 manhã)
-- [ ] **R3 Adapter**: `BancoAApi`, `BancoBApi` (simulados), `ServicoDeCobranca`, `AdaptadorBancoA/B`, quitação idempotente.
+- [x] **R3 Adapter**: `BancoAApi`, `BancoBApi` (simulados), `ServicoDeCobranca`, `AdaptadorBancoA/B`, quitação idempotente (branch `r03-adapter`, 8 testes; adiantado para depois do R2 por dependência).
 - [ ] **R9 Decorator**: `ConsultaAcervo`, `ConsultaAcervoPadrao`, `ConsultaComMedicao`, `ConsultaComCache`, `Medidor`.
 - [ ] **R8 (relacional)**: `FabricaRelacional`, `UnidadeDeTrabalhoJdbc` (conexão preguiçosa, transação única), repositórios JDBC, gravação/reconstituição do estado do Livro.
 - [ ] **CLI**: menu que chama **só tratadores**; roteiro do fluxo da demo (reserva → empréstimo → renovação → devolução atrasada → multa), com relógio ajustável (`Clock` injetado) para simular atraso.

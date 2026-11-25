@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.pucpr.biblioteca.compartilhado.RegraDeNegocioException;
+import br.pucpr.biblioteca.config.BancoDaInstalacao;
+import br.pucpr.biblioteca.persistencia.memoria.RepositorioDeMultasEmMemoria;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,7 +23,8 @@ class R02StrategyTest {
     private final ConfiguracaoAdministrativa configuracao = new ConfiguracaoAdministrativa(
             List.of(new PoliticaOriginal(), new PoliticaComTeto(), new PoliticaComTolerancia()),
             PoliticaOriginal.CODIGO);
-    private final ServicoDeMultas servico = new ServicoDeMultas(configuracao);
+    private final ServicoDeMultas servico = new ServicoDeMultas(configuracao, new RepositorioDeMultasEmMemoria(),
+            BancoDaInstalacao.criar("A").cobranca(), idEstudante -> new ConsultaDePagador.Pagador("Ana", "12345678909"));
 
     // ---------------------------------------------------------------------------------------------
     // Cenários de verificação do enunciado
