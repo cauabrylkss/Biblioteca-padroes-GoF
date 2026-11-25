@@ -1,0 +1,11 @@
+# Registro de uso de LLM
+
+Exigido pelo enunciado: resumo dos principais pedidos feitos ao modelo e o que a equipe **aceitou, corrigiu ou descartou**.
+Uma entrada por sessão/pedido relevante. A coluna "Decisão da equipe" é preenchida **pela equipe**, após revisar.
+
+| Data | Ferramenta / modelo | Pedido (resumo) | Resultado gerado | Decisão da equipe (aceito / corrigido / descartado + motivo) |
+|---|---|---|---|---|
+| 24/11/2026 | Claude Code (Claude Opus 5.5) | Ler o enunciado (PDF) e os 8 diagramas `.asta`, apontar representações fora do padrão UML, registrar o contexto em Markdown e montar um plano de ação. | `CLAUDE.md`; `docs/contexto/01..05`; `docs/RASTREABILIDADE.md` (esqueleto); `docs/diagramas/png-original/` (exportação dos diagramas); `tools/astah/` (script que exporta PNG e extrai o modelo pela API do Astah). | _a preencher_ |
+| 24/11/2026 | Claude Code (Claude Opus 5.5) | Registrar a orientação verbal do professor (diagramas de classes relevados), a escolha da CLI e listar todas as decisões necessárias. | `docs/contexto/06-decisoes.md` (decisões A–F com recomendação); ajustes em `01`, `03`, `04`, `05` e `CLAUDE.md`. | _a preencher_ |
+| 24/11/2026 | Claude Code (Claude Opus 5.5) | Aplicar a regra "o que o PDF não fixa, a UML decide" às regras de domínio em aberto e listar o que ainda falta decidir/instalar. | `06-decisoes.md` reescrito (precedência PDF > UML > recomendação; grupo B com fonte de cada regra); `CLAUDE.md` e `05` atualizados. | _a preencher_ |
+| 25/11/2026 | Claude Code (Claude Opus 5.5) | Fase 0: complementar o `pom.xml`/wrapper criados pela equipe e montar a fundação do projeto. | `pom.xml` (namespaces corrigidos; MySQL Connector/J; Surefire com perfil `-Pmysql`; jar executável `biblioteca.jar` via shade; exec:java); pacotes com `package-info.java`; `Main` (saída UTF-8 no console); `application.properties`; `FundacaoTest`; `.gitattributes`; `docs/mysql/criar-banco.sql`; README. | _a preencher_ |

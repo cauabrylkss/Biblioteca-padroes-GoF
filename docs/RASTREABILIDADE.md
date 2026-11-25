@@ -1,0 +1,18 @@
+# Tabela de rastreabilidade
+
+Requisito → padrão → classes que desempenham cada papel → teste que comprova o cenário.
+Status: ⬜ planejado · 🟨 em andamento · ✅ implementado e teste verde.
+**Atualizar a cada padrão concluído. Antes da entrega, conferir que toda classe citada existe no código e no UML.**
+
+| Req | Padrão | Papel GoF → classe | Teste(s) | Diagramas UML | Status |
+|---|---|---|---|---|---|
+| R1 | State | Context: `Livro` · State: `EstadoLivro` · ConcreteState: `Livre`, `Reservado`, `Emprestado`, `Renovado`, `Devolvido`, `Reparando`, `Incinerado` | `R01_terceiraRenovacaoRecusada`, `R01_devolvidoNaoInspecionadoNaoPodeSerReservado` | stm Livro; classes R1; seq R1 | ⬜ |
+| R2 | Strategy | Strategy: `PoliticaDeMulta` · ConcreteStrategy: `PoliticaOriginal`, `PoliticaComTeto`, `PoliticaComTolerancia` · Context: `ServicoDeMultas` | `R02_cincoDiasAtrasoPoliticaOriginalCincoReais`, `R02_cincoDiasAtrasoPoliticaToleranciaTresReais`, `R02_semAtrasoMultaZero` | classes R2; seq R2 | ⬜ |
+| R3 | Adapter | Target: `ServicoDeCobranca` · Adapter: `AdaptadorBancoA`, `AdaptadorBancoB` · Adaptee: `BancoAApi`, `BancoBApi` · Client: `ServicoDeMultas` | `R03_seteReaisViram700CentavosNoBancoAe7NoBancoB`, `R03_notificacaoRepetidaNaoQuitaDuasVezes` | classes R3; seq R3 | ⬜ |
+| R4 | Facade | Facade: `FachadaDeCirculacao` · Subsistemas: `Relacionamento`, `Movimentacao`, `Acervo`, `Livro` · Clientes: `TratadorDeEmprestimo`, `TratadorDeDevolucao` | `R04_efetivarEmprestimoValidaReservaRemoveReservaCriaEmprestimoAtualizaLivro` | classes R4; seq R4 | ⬜ |
+| R5 | Observer | Subject: `PublicadorDeDevolucao` · Observer: `OuvinteDeDevolucao` · ConcreteObserver: `OuvinteInspecao`, `OuvinteMulta`, `OuvinteIndicadores`, `OuvinteEmail` · Evento: `EventoDevolucao` | `R05_devolucaoAtrasadaAlimentaInspecaoMultaIndicadores`, `R05_devolucaoNoPrazoNaoGeraMulta`, `R05_falhaNoEmailNaoAfetaDemais` | classes R5; seq R5 | ⬜ |
+| R6 | Command | Command: `SolicitacaoDeCirculacao` · ConcreteCommand: `SolicitacaoDeReserva`, `SolicitacaoDeRenovacao` · Invoker: `ExecutorDeSolicitacoes` · Receiver: `FachadaDeCirculacao` · Client: CLI | `R06_renovacaoRepetidaMesmoIdAcrescentaSo30Dias`, `R06_solicitacoesDiferentesRespeitamLimiteDeDuas` | classes R6; seq R6 | ⬜ |
+| R7 | Template Method | AbstractClass: `CadastroTemplate` (`incluir()` final) · ConcreteClass: `CadastroDeLivro`, `CadastroDePessoa`, `CadastroDeEstudante`, `CadastroDeAtendente` · Interfaces preservadas: `iLivro`, `iPessoa`, `iEstudante`, `iAtendente` | `R07_estudanteDuplicadoRetornaExistente`, `R07_cpfNaoCadastradoFalhaAntesDeGravar` | classes R7; seq R7; act Incluir cadastro | ⬜ |
+| R8 | Abstract Factory | AbstractFactory: `FabricaDePersistencia` · ConcreteFactory: `FabricaEmMemoria`, `FabricaRelacional` · Products: `UnidadeDeTrabalho`, `RepositorioDeLivros`, `RepositorioDeMovimentacao`, `RepositorioDeRelacionamento` | `R08_perfilTesteSoObjetosEmMemoria`, `R08_perfilProducaoRepositoriosMysqlMesmaUnidade` | classes R8; seq R8; implantação | ⬜ |
+| R9 | Decorator | Component: `ConsultaAcervo` · ConcreteComponent: `ConsultaAcervoPadrao` · Decorator: `DecoradorDeConsulta` · ConcreteDecorator: `ConsultaComMedicao`, `ConsultaComCache` | `R09_segundaConsultaUsaCacheEGeraMedicao`, `R09_cacheAntigoNaoAutorizaReserva` | classes R9; seq R9 | ⬜ |
+| R10 | Composite | Component: `NoDoAcervo` · Composite: `GrupoDoAcervo` · Leaf: `ItemDoAcervo` · Gerência: `OrganizacaoDoAcervo` | `R10_unidadeComDuasSecoesTotalCinco`, `R10_moverLivroNaoAlteraIdEstadoNemEmprestimo` | classes R10; seq R10 | ⬜ |
