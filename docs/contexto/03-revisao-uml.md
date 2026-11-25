@@ -22,22 +22,27 @@ diagramas ou com o código-alvo · 🟡 qualidade/legibilidade.
 | E8 | 🟡 | Dois estados finais (após `excluirLivro()` e após Incinerado) — permitido, mas Incinerado→[*] por transição de conclusão torna "Incinerado" efêmero. | Deixar **Incinerado como estado terminal estável** (sem saída) ou manter só o final de `excluir()`. Escolher um e refletir no código. |
 | E9 | 🟡 | Falta cancelamento/expiração de reserva (Reservado → Livre). | Opcional: `Reservado --> Livre : cancelarReserva()`. Só incluir se for implementado. |
 
-**Máquina-alvo** (mesmos nomes do código):
+**Máquina-alvo** — ✅ **implementada no R1** (`biblioteca.livro`); desenhar no Astah exatamente assim. Cada linha é
+um método da classe do estado de origem (`Livre`, `Reservado`, …), e o teste
+`R01_cadaEstadoAceitaSoAsTransicoesDoDiagramaERecusaAsDemaisSemAlterarOLivro` confere a tabela inteira:
 ```
-[*] --> Livre
-Livre      --> Reservado  : reservar(idEstudante)
+[*] --> Livre                                   (sem evento; livro novo nasce LIVRE)
+Livre      --> Reservado  : reservar()
 Livre      --> Reparando  : enviarParaReparo()
 Livre      --> [*]        : excluir()
-Reservado  --> Emprestado : emprestar(idEstudante) [idEstudante = reserva.idEstudante]
-Emprestado --> Renovado   : renovar(emprestimo) [emprestimo.numRenovacoes < 2] / emprestimo.prorrogar(30)
-Renovado   --> Renovado   : renovar(emprestimo) [emprestimo.numRenovacoes < 2] / emprestimo.prorrogar(30)
+Reservado  --> Emprestado : emprestar(reserva, idEstudante) [reserva.idEstudante = idEstudante]
+Emprestado --> Renovado   : renovar(emprestimo) [emprestimo.numRenovacoes < 2] / emprestimo.prorrogar()
+Renovado   --> Renovado   : renovar(emprestimo) [emprestimo.numRenovacoes < 2] / emprestimo.prorrogar()
 Emprestado --> Devolvido  : registrarDevolucao()
 Renovado   --> Devolvido  : registrarDevolucao()
 Devolvido  --> Livre      : inspecionar(emBomEstado) [emBomEstado]
 Devolvido  --> Reparando  : inspecionar(emBomEstado) [not emBomEstado]
 Reparando  --> Livre      : retornarDoReparo()
 Reparando  --> Incinerado : registrarLaudoIrrecuperavel()
+Incinerado                 (estado final estável: não aceita nenhum evento — decisão B-19, resolve E8)
 ```
+`emprestimo.prorrogar()` = vencimento + 30 dias e `numRenovacoes + 1`. A validação "estudante cadastrado" (antiga
+guarda de `solicitarReserva`) fica na fachada (R4), não na máquina do livro (E6).
 
 ---
 

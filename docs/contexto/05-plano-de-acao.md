@@ -28,7 +28,7 @@ JDK 25, diagramas de classes relevados (PR1).
 
 ## Fase 1 — Núcleo do domínio (qua 25/11 manhã) · padrões sem dependências
 Cada item = classes + teste `Rxx_` verde.
-- [ ] **R1 State**: `Livro`, `EstadoLivro` + 7 estados, `SituacaoLivro`, `TransicaoInvalidaException`, `Emprestimo.prorrogar`.
+- [x] **R1 State**: `Livro`, `EstadoLivro` + 7 estados, `SituacaoLivro`, `TransicaoInvalidaException`, `Emprestimo.prorrogar` (branch `r01-state`, 19 testes).
 - [ ] **R2 Strategy**: `PoliticaDeMulta` + 3, `ServicoDeMultas` (parte de cálculo), `ConfiguracaoAdministrativa`, `Multa`.
 - [ ] **R10 Composite**: `NoDoAcervo`, `GrupoDoAcervo`, `ItemDoAcervo`, `OrganizacaoDoAcervo`.
 - [ ] Entidades: `Pessoa`, `Papel`, `Estudante`, `Atendente`, `Transacao`, `Reserva`, `Devolucao`.
