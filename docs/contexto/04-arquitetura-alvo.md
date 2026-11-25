@@ -186,7 +186,7 @@ ganchos (`verificarPreRequisitos`: grupo existe; `aposArmazenar`: catalogar). Es
 pessoa (`inserirEstudante(String cpf)`); validação de CPF com dígitos verificadores em `rh.Cpf` (B-23). Tratadores
 devolvem fichas imutáveis (`FichaDoLivro`, `FichaDaPessoa`, `FichaDoPapel`) dentro de `Resultado`, nunca a entidade.
 
-## R8 — Abstract Factory  🟨 família em memória implementada (`persistencia`, `persistencia.memoria`); relacional na Fase 3
+## R8 — Abstract Factory  ✅ implementado (`persistencia`, `persistencia.memoria`, `persistencia.jdbc`)
 | Papel | Classe |
 |---|---|
 | AbstractFactory | `FabricaDePersistencia { UnidadeDeTrabalho unidadeDeTrabalho(); RepositorioDeLivros livros(); RepositorioDeMovimentacao movimentacao(); RepositorioDeRelacionamento relacionamento(); }` |
@@ -204,7 +204,8 @@ devolvem fichas imutáveis (`FichaDoLivro`, `FichaDaPessoa`, `FichaDoPapel`) den
   do mapa; `desfazer` restaura, `confirmar` descarta; uma `ReentrantLock` única serializa transações e operações
   avulsas. Os repositórios guardam **records imutáveis** e devolvem objetos novos (como um banco): o estado do
   livro é gravado como `SituacaoLivro` e reconstituído por `Livro.reconstituir`. Perfil: `teste`/`memoria` →
-  `FabricaEmMemoria`; `producao` → `UnsupportedOperationException` até a Fase 3.
+  `FabricaEmMemoria`; `producao` → `FabricaRelacional`.
+- Implementado (MySQL): `UnidadeDeTrabalhoJdbc` com **uma** `Connection` aberta no primeiro uso (cria o schema, D-06), trava única como na memória; `iniciar` = `setAutoCommit(false)`, `confirmar` = `COMMIT`, `desfazer` = `ROLLBACK`; fora de transação, auto-commit (multas, após o commit). Tabelas: `livro` (`situacao` = nome do estado), `pessoa`, `estudante`, `atendente` (FK → pessoa), `transacao` (coluna `tipo`), `multa` (com colunas do boleto), `notificacao_processada` (PK = idempotência). Credenciais: `ConfiguracaoDoBanco.doAmbiente` (D-07). `FabricaRelacional.apagarTodosOsDados()` serve ao `--reiniciar-dados` e ao teste de integração.
 
 ## R9 — Decorator
 | Papel | Classe |

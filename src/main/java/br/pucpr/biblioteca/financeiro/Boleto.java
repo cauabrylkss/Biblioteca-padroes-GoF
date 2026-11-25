@@ -22,6 +22,14 @@ public class Boleto {
         this.situacao = SituacaoBoleto.EMITIDO;
     }
 
+    /** Recria um boleto já gravado, com a situação que estava no banco de dados (repositório relacional, R8). */
+    public static Boleto reconstituir(String banco, String identificadorNoBanco, BigDecimal valor,
+                                      SituacaoBoleto situacao) {
+        Boleto boleto = new Boleto(banco, identificadorNoBanco, valor);
+        boleto.situacao = Objects.requireNonNull(situacao, "situacao");
+        return boleto;
+    }
+
     /** EMITIDO → PAGO. */
     void registrarPagamento() {
         if (situacao == SituacaoBoleto.PAGO) {
