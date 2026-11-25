@@ -1,8 +1,16 @@
 package br.pucpr.biblioteca.config;
 
 import br.pucpr.biblioteca.academico.Estudante;
+import br.pucpr.biblioteca.academico.TratadorDeEstudante;
+import br.pucpr.biblioteca.academico.iEstudante;
 import br.pucpr.biblioteca.biblioteca.acervo.Acervo;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
+import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeAcervo;
+import br.pucpr.biblioteca.biblioteca.tratadores.iLivro;
+import br.pucpr.biblioteca.cadastro.CadastroDeAtendente;
+import br.pucpr.biblioteca.cadastro.CadastroDeEstudante;
+import br.pucpr.biblioteca.cadastro.CadastroDeLivro;
+import br.pucpr.biblioteca.cadastro.CadastroDePessoa;
 import br.pucpr.biblioteca.config.BancoDaInstalacao.BancoConfigurado;
 import br.pucpr.biblioteca.config.BancoDaInstalacao.SimuladorDePagamento;
 import br.pucpr.biblioteca.financeiro.ConfiguracaoAdministrativa;
@@ -13,9 +21,14 @@ import br.pucpr.biblioteca.financeiro.PoliticaComTolerancia;
 import br.pucpr.biblioteca.financeiro.PoliticaOriginal;
 import br.pucpr.biblioteca.financeiro.ServicoDeMultas;
 import br.pucpr.biblioteca.persistencia.FabricaDePersistencia;
+import br.pucpr.biblioteca.persistencia.UnidadeDeTrabalho;
 import br.pucpr.biblioteca.persistencia.memoria.FabricaEmMemoria;
 import br.pucpr.biblioteca.rh.Pessoa;
 import br.pucpr.biblioteca.rh.Relacionamento;
+import br.pucpr.biblioteca.rh.TratadorDeAtendente;
+import br.pucpr.biblioteca.rh.TratadorDePessoa;
+import br.pucpr.biblioteca.rh.iAtendente;
+import br.pucpr.biblioteca.rh.iPessoa;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -33,8 +46,10 @@ import java.util.Properties;
  *   <li><b>R2</b> — políticas de multa disponíveis e a vigente ({@code multa.politica}).
  *       <i>Nova política = nova classe + uma linha na lista de {@link #politicasDeMulta()}.</i></li>
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
+ *   <li><b>R7</b> — cadastros e tratadores.</li>
  * </ul>
- * Fases seguintes acrescentam aqui cadastros (R7), fachada (R4), ouvintes (R5) e solicitações (R6).
+ * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
+ * {@code iAtendente}).
  */
 public final class Aplicacao {
 
@@ -52,6 +67,12 @@ public final class Aplicacao {
     private final BancoConfigurado banco;
     private final ServicoDeMultas servicoDeMultas;
 
+    // tratadores (únicos objetos que a interface conhece)
+    private final iLivro tratadorDeAcervo;
+    private final iPessoa tratadorDePessoa;
+    private final iEstudante tratadorDeEstudante;
+    private final iAtendente tratadorDeAtendente;
+
     private Aplicacao(Properties propriedades, Clock relogio) {
         this.propriedades = Objects.requireNonNull(propriedades, "propriedades");
         this.relogio = Objects.requireNonNull(relogio, "relogio");
@@ -59,6 +80,7 @@ public final class Aplicacao {
         // R8: a família de persistência é escolhida aqui, uma vez.
         this.perfil = PerfilDeExecucao.de(propriedade("perfil", "teste"));
         this.fabrica = criarFabrica(perfil);
+        UnidadeDeTrabalho unidadeDeTrabalho = fabrica.unidadeDeTrabalho();
 
         this.relacionamento = new Relacionamento(fabrica.relacionamento());
         this.acervo = new Acervo(fabrica.livros(), new OrganizacaoDoAcervo());
@@ -69,6 +91,12 @@ public final class Aplicacao {
         this.banco = BancoDaInstalacao.criar(propriedade("banco", "A"));
         this.servicoDeMultas = new ServicoDeMultas(configuracaoDeMultas, fabrica.multas(), banco.cobranca(),
                 pagadoresDoRelacionamento());
+
+        // R7 + tratadores
+        this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho);
+        this.tratadorDePessoa = new TratadorDePessoa(new CadastroDePessoa(relacionamento, relogio), relacionamento);
+        this.tratadorDeEstudante = new TratadorDeEstudante(new CadastroDeEstudante(relacionamento), relacionamento);
+        this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
     }
 
     /** Monta a aplicação com a configuração e o relógio informados (testes usam um relógio ajustável). */
@@ -129,6 +157,26 @@ public final class Aplicacao {
 
     private String propriedade(String chave, String padrao) {
         return propriedades.getProperty(chave, padrao).strip();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Acesso para a interface (só tratadores)
+    // ---------------------------------------------------------------------------------------------
+
+    public iLivro tratadorDeAcervo() {
+        return tratadorDeAcervo;
+    }
+
+    public iPessoa tratadorDePessoa() {
+        return tratadorDePessoa;
+    }
+
+    public iEstudante tratadorDeEstudante() {
+        return tratadorDeEstudante;
+    }
+
+    public iAtendente tratadorDeAtendente() {
+        return tratadorDeAtendente;
     }
 
     // ---------------------------------------------------------------------------------------------
