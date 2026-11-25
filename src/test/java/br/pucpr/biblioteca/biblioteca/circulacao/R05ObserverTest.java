@@ -140,13 +140,15 @@ class R05ObserverTest {
         CenarioDeTeste c = CenarioDeTeste.novo();
         List<EventoDevolucao> auditoria = new ArrayList<>();
         OuvinteDeDevolucao ouvinteAuditoria = auditoria::add;             // "uma classe nova" + registrar
+        int registradosAntes = c.app.publicadorDeDevolucao().ouvintes().size();
         c.app.publicadorDeDevolucao().registrar(ouvinteAuditoria);
         c.emprestar(LIVRO, c.ana);
 
         c.app.tratadorDeDevolucao().registrarDevolucao(LIVRO, c.ana, c.bruno);
 
         assertThat(auditoria).singleElement().satisfies(e -> assertThat(e.idLivro()).isEqualTo(LIVRO));
-        assertThat(c.app.publicadorDeDevolucao().ouvintes()).hasSize(5);
+        // relativo (e não "5"): continua valendo depois de registrar outro ouvinte no composition root, ao vivo
+        assertThat(c.app.publicadorDeDevolucao().ouvintes()).hasSize(registradosAntes + 1).contains(ouvinteAuditoria);
     }
 
     private static SituacaoLivro situacao(CenarioDeTeste c) {

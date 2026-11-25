@@ -20,8 +20,12 @@ obrigatórios**, com código **coerente com os modelos UML** (Astah). **Entrega:
 O PDF pede diagramas de classes por padrão e coerência código × UML; o professor disse verbalmente que **os diagramas
 de classes UML não precisam estar corretamente modelados** e que o desenho com base nos padrões vem do desenvolvimento
 (com apoio do LLM). Portanto: **não atualizar diagramas de classes**; o desenho de referência é `04-arquitetura-alvo.md`
-+ o código. Máquina de estados, atividades, componentes e implantação **continuam** sendo corrigidos. Mencionar o relevo
-no README.
++ o código. Mencionar o relevo no README.
+
+**UML não será refatorada (decisão da equipe, 25/11 — `06-decisoes.md` A-09):** os demais diagramas (máquina de
+estados, atividades, componentes, implantação, sequências, casos de uso) também ficam como estão. As divergências
+entre UML e código ficam documentadas em `03-revisao-uml.md` (material para a arguição). Não propor a refatoração de
+novo.
 
 ## Os 10 padrões (cada um na situação indicada — não trocar)
 R1 **State** ciclo de vida do Livro · R2 **Strategy** políticas de multa · R3 **Adapter** bancos A/B · R4 **Facade**
@@ -74,8 +78,13 @@ padrões (grupo C) é do desenvolvimento (PR1).
 - **Ambiente (24/11):** JDK em `C:\Program Files\Microsoft\jdk-25.0.5.102-hotspot`, Maven em
   `C:\Program Files\Apache\maven\apache-maven-3.10.2`. `JAVA_HOME` definido (máquina). Shells abertos antes da
   instalação ainda resolvem `java` para o JRE 8 — se `java -version` mostrar 1.8, pôr `$JAVA_HOME/bin` e o `bin` do
-  Maven no início do PATH. **MySQL**: serviço Windows `MySQL` em `localhost:3306` (sem Docker). Não usar o JDK interno
-  do Astah para o projeto.
+  Maven no início do PATH. **MySQL**: serviço Windows `MySQL` em `localhost:3306` (sem Docker), banco e usuário
+  `biblioteca` criados, `BIBLIOTECA_DB_USUARIO`/`BIBLIOTECA_DB_SENHA` definidas (usuário do Windows). Não usar o JDK
+  interno do Astah para o projeto.
+- CLI: `java -jar target/biblioteca.jar` (perfil padrão `producao` = MySQL, D-09) · `--perfil=memoria` (plano B) ·
+  `--reiniciar-dados` · `--roteiro=docs/demo/roteiro-demo.txt` (fluxo da demo; executado também pelo `InterfaceCliTest`
+  — mudar a CLI exige manter o roteiro funcionando). Testes de integração com MySQL: `./mvnw test -Pmysql` (**apagam os
+  dados** do banco; depois rodar a CLI com `--reiniciar-dados`).
 
 ## Testes
 - **Um teste por cenário de verificação**, nome iniciando pelo requisito: `R01_terceiraRenovacaoRecusada`,
@@ -86,8 +95,9 @@ padrões (grupo C) é do desenvolvimento (PR1).
 - Fontes em `docs/*.asta`; PNG do estado original em `docs/diagramas/png-original/`.
 - Os `.asta` são ZIP com objetos Java serializados — **não editar à mão**. Para ler: `bash tools/astah/extrair.sh`
   (usa o Astah em `C:\Program Files\astah-UML`; gera PNGs + dump textual em `build/astah/`).
-- Ao mudar nomes de eventos do Livro, componentes ou nós de implantação, **atualizar a mesma mudança no UML**
-  (coerência = 15% da nota; diagramas de classes ficam de fora por PR1) e registrar em `03-revisao-uml.md` o que falta.
+- **Não editar os diagramas** (A-09). Ao mudar nomes de eventos do Livro, componentes ou nós de implantação no código,
+  registrar a nova divergência em `03-revisao-uml.md` (coerência código × UML = 15% da nota; a equipe explica as
+  divergências na arguição).
 - Os modelos têm **elementos fantasmas** (apagados do diagrama, não do modelo) — não usá-los como referência; a
   verdade é o que está desenhado + `04-arquitetura-alvo.md`.
 
@@ -97,7 +107,9 @@ padrões (grupo C) é do desenvolvimento (PR1).
   Fluxo com LLM: **um padrão por vez**; a equipe revisa e explica antes do próximo.
 - Commits/push só quando pedido. Não commitar credenciais do MySQL (usar variáveis `BIBLIOTECA_DB_*`).
 - A confirmação escrita do relevo PR1 **não será pedida** — não voltar a sugerir.
-- `Main` força saída UTF-8 (console do Windows embaralha acentos); manter isso ao mexer na CLI.
+- `Main` força saída UTF-8 (console do Windows embaralha acentos); manter isso ao mexer na CLI. O console do Windows
+  abre na página 850: `interfaceusuario.ConsoleDoWindows` o coloca em UTF-8 durante a execução (e restaura ao sair) e o
+  teclado é lido em UTF-8. Não usar na CLI símbolos ausentes da fonte padrão do console (✓ ✗ ⚠ ●).
 - Toda sessão com LLM que gere código ou documentação → nova linha em `REGISTRO_LLM.md`.
 - Ao concluir um padrão: teste verde → atualizar `docs/RASTREABILIDADE.md` (status ✅) → marcar checklist em `05-plano-de-acao.md`.
 - Código precisa ser explicável por qualquer integrante: preferir clareza a abstração extra; comentar o **papel GoF** no
