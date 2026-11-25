@@ -1,5 +1,6 @@
 package br.pucpr.biblioteca.biblioteca.tratadores;
 
+import br.pucpr.biblioteca.biblioteca.acervo.MetadadosLivro;
 import br.pucpr.biblioteca.cadastro.Resultado;
 import java.util.List;
 import java.util.Optional;
@@ -16,9 +17,16 @@ public interface iLivro {
 
     FichaDoLivro atualizarLivro(long idLivro, String novoTitulo);
 
+    /** Ficha completa, com o estado <b>atual</b> do livro (sempre lida do repositório, nunca do cache). */
     Optional<FichaDoLivro> consultarLivro(long idLivro);
 
     List<FichaDoLivro> consultarAcervo();
+
+    /** Metadados pela consulta ao acervo (R9): pode vir do cache e é medida, conforme a instalação. */
+    Optional<MetadadosLivro> consultarMetadados(long idLivro);
+
+    /** Busca por trecho do título pela consulta ao acervo (R9). */
+    List<MetadadosLivro> buscarPorTitulo(String trecho);
 
     /** Exclui o livro; só é aceito se ele estiver LIVRE (decidido pelo estado do livro, B-18). */
     void excluirLivro(long idLivro);

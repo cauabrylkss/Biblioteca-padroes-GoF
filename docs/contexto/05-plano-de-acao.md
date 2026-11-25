@@ -44,7 +44,7 @@ Cada item = classes + teste `Rxx_` verde.
 
 ## Fase 3 — Integrações e produção (qui 26/11 manhã)
 - [x] **R3 Adapter**: `BancoAApi`, `BancoBApi` (simulados), `ServicoDeCobranca`, `AdaptadorBancoA/B`, quitação idempotente (branch `r03-adapter`, 8 testes; adiantado para depois do R2 por dependência).
-- [ ] **R9 Decorator**: `ConsultaAcervo`, `ConsultaAcervoPadrao`, `ConsultaComMedicao`, `ConsultaComCache`, `Medidor`.
+- [x] **R9 Decorator**: `ConsultaAcervo`, `ConsultaAcervoPadrao`, `DecoradorDeConsulta`, `ConsultaComMedicao`, `ConsultaComCache`, `Medidor`, `MetadadosLivro` (branch `r09-decorator`, empilhada sobre `r08-relacional`; 8 testes; total 90).
 - [x] **R8 (relacional)**: `FabricaRelacional`, `UnidadeDeTrabalhoJdbc` (conexão preguiçosa, transação única), repositórios JDBC (incl. multas), `schema.sql`, gravação/reconstituição do estado do Livro (branch `r08-relacional`; 1 teste no `mvnw test` + 4 de integração em `mvnw test -Pmysql`, rodados contra o MySQL local). *Feito antes do R9 porque a demo roda em MySQL (D-09).*
 - [ ] **CLI**: perfil padrão `producao` (D-09) + `--perfil=memoria`; dados de exemplo só com banco vazio + `--reiniciar-dados` (D-10); numeração do banco simulado (D-12); menu que chama **só tratadores**; roteiro do fluxo da demo (reserva → empréstimo → renovação → devolução atrasada → multa), com relógio ajustável (`Clock` injetado) para simular atraso.
 - [ ] `./mvnw test` → todos os `Rxx_` verdes. Rodar contra MySQL real ao menos uma vez.

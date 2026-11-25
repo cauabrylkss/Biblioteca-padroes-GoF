@@ -207,7 +207,7 @@ devolvem fichas imutáveis (`FichaDoLivro`, `FichaDaPessoa`, `FichaDoPapel`) den
   `FabricaEmMemoria`; `producao` → `FabricaRelacional`.
 - Implementado (MySQL): `UnidadeDeTrabalhoJdbc` com **uma** `Connection` aberta no primeiro uso (cria o schema, D-06), trava única como na memória; `iniciar` = `setAutoCommit(false)`, `confirmar` = `COMMIT`, `desfazer` = `ROLLBACK`; fora de transação, auto-commit (multas, após o commit). Tabelas: `livro` (`situacao` = nome do estado), `pessoa`, `estudante`, `atendente` (FK → pessoa), `transacao` (coluna `tipo`), `multa` (com colunas do boleto), `notificacao_processada` (PK = idempotência). Credenciais: `ConfiguracaoDoBanco.doAmbiente` (D-07). `FabricaRelacional.apagarTodosOsDados()` serve ao `--reiniciar-dados` e ao teste de integração.
 
-## R9 — Decorator
+## R9 — Decorator  ✅ implementado (`biblioteca.acervo`)
 | Papel | Classe |
 |---|---|
 | Component | `ConsultaAcervo { MetadadosLivro consultarMetadados(long idLivro); List<MetadadosLivro> buscarPorTitulo(String) }` |
@@ -218,6 +218,12 @@ devolvem fichas imutáveis (`FichaDoLivro`, `FichaDaPessoa`, `FichaDoPapel`) den
 - Ordem: `new ConsultaComMedicao(new ConsultaComCache(new ConsultaAcervoPadrao(...)))` → medição por fora, então
   acerto de cache **também é medido**.
 - `MetadadosLivro` **não tem estado** do livro. A fachada, ao reservar, lê o `Livro` do repositório (estado atual).
+- Implementado: `ConsultaAcervo.consultarMetadados` devolve `Optional<MetadadosLivro>` (id, título); `livroAlterado(id)`
+  (default vazio) atravessa a cadeia e faz o cache descartar o livro — chamado pelo `TratadorDeAcervo` ao alterar o
+  título ou excluir (C-10). Cache em `ConcurrentHashMap` (armazenamento trocável no construtor, para o teste de falha),
+  contadores `acertos`/`faltas`; falha do armazenamento → log `System.Logger` + delega. `Medidor`: chamadas e tempo
+  total por operação. Cadeia montada em `Aplicacao.montarConsultaAcervo` por `consulta.cache`/`consulta.medicao`;
+  `iLivro` ganhou `consultarMetadados` e `buscarPorTitulo` (a CLI só fala com tratadores).
 
 ## R10 — Composite  ✅ implementado (`biblioteca.acervo`)
 | Papel | Classe |
