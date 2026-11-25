@@ -123,7 +123,7 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
   (`Emprestimo.exigirEstudante`). Transação: `UnidadeDeTrabalho.executar(...)` (try → confirmar; catch → desfazer).
   Laudo irrecuperável também retira o livro da árvore do acervo (B-19).
 
-## R5 — Observer
+## R5 — Observer  ✅ implementado (`biblioteca.circulacao`)
 | Papel | Classe |
 |---|---|
 | Subject | `PublicadorDeDevolucao` (`registrar`, `remover`, `publicar`) |
@@ -133,6 +133,11 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
 
 - A fachada publica **depois de `uow.confirmar()`**. `publicar` faz `try/catch` **por ouvinte** e registra a falha.
 - Livro continua `DEVOLVIDO`; só `inspecionar(...)` muda o estado.
+- Implementado: `publicar` devolve a lista de falhas, que vira `ComprovanteDevolucao.avisos`. `FilaDeInspecao` guarda
+  as pendências (o ouvinte acrescenta; `FachadaDeCirculacao.inspecionar` retira). `OuvinteMulta` chama
+  `iMulta.emitirSeHouverAtraso` (Financeiro → Biblioteca, C-15; realizada por `ServicoDeMultas`). `OuvinteEmail` envia
+  o aviso de devolução por `ServicoDeEmail` (simulado, `email.falhar=true` força falha). `OuvinteIndicadores` conta
+  devoluções, atrasadas e dias de atraso (B-21). Registro em `config.Aplicacao.registrarOuvintes()`.
 
 ## R6 — Command
 | Papel | Classe |

@@ -15,6 +15,9 @@ public interface RepositorioDeMultas {
 
     List<Multa> listarDoEstudante(long idEstudante);
 
+    /** Multa emitida para o empréstimo (no máximo uma: um empréstimo tem uma única devolução). */
+    Optional<Multa> buscarPorEmprestimo(long idEmprestimo);
+
     /**
      * Marca uma notificação de pagamento como processada.
      *

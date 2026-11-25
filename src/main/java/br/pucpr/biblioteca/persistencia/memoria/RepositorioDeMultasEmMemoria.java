@@ -45,6 +45,11 @@ public class RepositorioDeMultasEmMemoria implements RepositorioDeMultas {
     }
 
     @Override
+    public synchronized Optional<Multa> buscarPorEmprestimo(long idEmprestimo) {
+        return multas.values().stream().filter(m -> m.getIdEmprestimo() == idEmprestimo).findFirst();
+    }
+
+    @Override
     public synchronized boolean registrarNotificacaoProcessada(String banco, String idNotificacao) {
         return notificacoesProcessadas.add(banco + ":" + idNotificacao);
     }

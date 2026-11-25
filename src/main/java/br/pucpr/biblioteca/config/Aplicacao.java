@@ -6,6 +6,12 @@ import br.pucpr.biblioteca.academico.iEstudante;
 import br.pucpr.biblioteca.biblioteca.acervo.Acervo;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
 import br.pucpr.biblioteca.biblioteca.circulacao.FachadaDeCirculacao;
+import br.pucpr.biblioteca.biblioteca.circulacao.FilaDeInspecao;
+import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteEmail;
+import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteIndicadores;
+import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteInspecao;
+import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteMulta;
+import br.pucpr.biblioteca.biblioteca.circulacao.PublicadorDeDevolucao;
 import br.pucpr.biblioteca.biblioteca.movimentacao.Movimentacao;
 import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeAcervo;
 import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeDevolucao;
@@ -17,6 +23,7 @@ import br.pucpr.biblioteca.cadastro.CadastroDeAtendente;
 import br.pucpr.biblioteca.cadastro.CadastroDeEstudante;
 import br.pucpr.biblioteca.cadastro.CadastroDeLivro;
 import br.pucpr.biblioteca.cadastro.CadastroDePessoa;
+import br.pucpr.biblioteca.compartilhado.ServicoDeEmailSimulado;
 import br.pucpr.biblioteca.config.BancoDaInstalacao.BancoConfigurado;
 import br.pucpr.biblioteca.config.BancoDaInstalacao.SimuladorDePagamento;
 import br.pucpr.biblioteca.financeiro.ConfiguracaoAdministrativa;
@@ -52,6 +59,8 @@ import java.util.Properties;
  *   <li><b>R2</b> — políticas de multa disponíveis e a vigente ({@code multa.politica}).
  *       <i>Nova política = nova classe + uma linha na lista de {@link #politicasDeMulta()}.</i></li>
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
+ *   <li><b>R5</b> — ouvintes da devolução, na ordem inspeção → multa → indicadores → e-mail (C-06).
+ *       <i>Novo ouvinte = nova classe + um {@code publicador.registrar(...)} em {@link #registrarOuvintes()}.</i></li>
  *   <li><b>R4/R7</b> — fachada, cadastros e tratadores.</li>
  * </ul>
  * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
@@ -73,6 +82,12 @@ public final class Aplicacao {
     private final ConfiguracaoAdministrativa configuracaoDeMultas;
     private final BancoConfigurado banco;
     private final ServicoDeMultas servicoDeMultas;
+
+    // reações à devolução (R5)
+    private final PublicadorDeDevolucao publicador = new PublicadorDeDevolucao();
+    private final FilaDeInspecao filaDeInspecao = new FilaDeInspecao();
+    private final OuvinteIndicadores indicadores = new OuvinteIndicadores();
+    private final ServicoDeEmailSimulado email;
 
     // tratadores (únicos objetos que a interface conhece)
     private final iLivro tratadorDeAcervo;
@@ -102,10 +117,14 @@ public final class Aplicacao {
         this.servicoDeMultas = new ServicoDeMultas(configuracaoDeMultas, fabrica.multas(), banco.cobranca(),
                 pagadoresDoRelacionamento());
 
+        // R5
+        this.email = new ServicoDeEmailSimulado(Boolean.parseBoolean(propriedade("email.falhar", "false")));
+        registrarOuvintes();
+
         // R4
         int prazo = Integer.parseInt(propriedade("emprestimo.prazo.dias", "30"));
         FachadaDeCirculacao fachada = new FachadaDeCirculacao(relacionamento, movimentacao, acervo, unidadeDeTrabalho,
-                relogio, prazo);
+                publicador, filaDeInspecao, relogio, prazo);
 
         // R7 + tratadores
         this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho);
@@ -113,7 +132,7 @@ public final class Aplicacao {
         this.tratadorDeEstudante = new TratadorDeEstudante(new CadastroDeEstudante(relacionamento), relacionamento);
         this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
         this.tratadorDeEmprestimo = new TratadorDeEmprestimo(fachada);
-        this.tratadorDeDevolucao = new TratadorDeDevolucao(fachada);
+        this.tratadorDeDevolucao = new TratadorDeDevolucao(fachada, servicoDeMultas, filaDeInspecao);
     }
 
     /** Monta a aplicação com a configuração e o relógio informados (testes usam um relógio ajustável). */
@@ -161,6 +180,14 @@ public final class Aplicacao {
     /** R2: políticas que o administrador pode escolher. Nova política → acrescentar aqui. */
     private static List<PoliticaDeMulta> politicasDeMulta() {
         return List.of(new PoliticaOriginal(), new PoliticaComTeto(), new PoliticaComTolerancia());
+    }
+
+    /** R5: ouvintes da devolução, na ordem de chamada. Novo ouvinte → registrar aqui. */
+    private void registrarOuvintes() {
+        publicador.registrar(new OuvinteInspecao(filaDeInspecao));
+        publicador.registrar(new OuvinteMulta(servicoDeMultas));
+        publicador.registrar(indicadores);
+        publicador.registrar(new OuvinteEmail(email));
     }
 
     /** O Financeiro requer dados de pessoa do RH (diagrama de componentes): nome e CPF do estudante. */
@@ -230,6 +257,18 @@ public final class Aplicacao {
 
     public SimuladorDePagamento simuladorDePagamento() {
         return banco.simulador();
+    }
+
+    public PublicadorDeDevolucao publicadorDeDevolucao() {
+        return publicador;
+    }
+
+    public OuvinteIndicadores.Indicadores indicadores() {
+        return indicadores.indicadores();
+    }
+
+    public ServicoDeEmailSimulado email() {
+        return email;
     }
 
     public OrganizacaoDoAcervo organizacaoDoAcervo() {

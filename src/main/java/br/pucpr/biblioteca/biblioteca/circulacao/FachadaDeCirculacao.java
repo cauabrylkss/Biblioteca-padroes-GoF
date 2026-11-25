@@ -12,6 +12,7 @@ import br.pucpr.biblioteca.persistencia.UnidadeDeTrabalho;
 import br.pucpr.biblioteca.rh.Relacionamento;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -25,7 +26,8 @@ import java.util.function.Consumer;
  * Devolve sempre um {@link Comprovante} (registro imutável) — nunca coleções nem objetos do domínio.
  *
  * <p>A fachada não decide regras do livro: quem aceita ou recusa cada evento é o estado do livro (R1). Ela também não
- * tem {@code if} sobre a situação do livro. Clientes: {@code TratadorDeEmprestimo} e {@code TratadorDeDevolucao}.
+ * tem {@code if} sobre a situação do livro. Clientes: {@code TratadorDeEmprestimo} e {@code TratadorDeDevolucao}
+ * (e as solicitações do Command, R6).
  */
 public class FachadaDeCirculacao {
 
@@ -33,16 +35,20 @@ public class FachadaDeCirculacao {
     private final Movimentacao movimentacao;
     private final Acervo acervo;
     private final UnidadeDeTrabalho unidadeDeTrabalho;
+    private final PublicadorDeDevolucao publicador;
+    private final FilaDeInspecao filaDeInspecao;
     private final Clock relogio;
     private final int prazoEmprestimoDias;
 
     public FachadaDeCirculacao(Relacionamento relacionamento, Movimentacao movimentacao, Acervo acervo,
-                               UnidadeDeTrabalho unidadeDeTrabalho, Clock relogio,
-                               int prazoEmprestimoDias) {
+                               UnidadeDeTrabalho unidadeDeTrabalho, PublicadorDeDevolucao publicador,
+                               FilaDeInspecao filaDeInspecao, Clock relogio, int prazoEmprestimoDias) {
         this.relacionamento = Objects.requireNonNull(relacionamento, "relacionamento");
         this.movimentacao = Objects.requireNonNull(movimentacao, "movimentacao");
         this.acervo = Objects.requireNonNull(acervo, "acervo");
         this.unidadeDeTrabalho = Objects.requireNonNull(unidadeDeTrabalho, "unidadeDeTrabalho");
+        this.publicador = Objects.requireNonNull(publicador, "publicador");
+        this.filaDeInspecao = Objects.requireNonNull(filaDeInspecao, "filaDeInspecao");
         this.relogio = Objects.requireNonNull(relogio, "relogio");
         this.prazoEmprestimoDias = prazoEmprestimoDias;
     }
@@ -104,9 +110,13 @@ public class FachadaDeCirculacao {
         });
     }
 
-    /** Registra a devolução. O livro fica DEVOLVIDO até a inspeção. */
+    /**
+     * Registra a devolução. A transação é confirmada <b>antes</b> de avisar os ouvintes (R5): se um ouvinte falhar, a
+     * devolução já está gravada e não é desfeita; a falha volta como aviso no comprovante. O livro fica DEVOLVIDO
+     * até a inspeção.
+     */
     public ComprovanteDevolucao registrarDevolucao(long idLivro, long idEstudante, long idAtendente) {
-        return unidadeDeTrabalho.executar(() -> {
+        ComprovanteDevolucao comprovante = unidadeDeTrabalho.executar(() -> {
             relacionamento.exigirAtendente(idAtendente);
             Emprestimo emprestimo = exigirEmprestimoAtivo(idLivro);
             emprestimo.exigirEstudante(idEstudante);
@@ -115,8 +125,12 @@ public class FachadaDeCirculacao {
             Devolucao devolucao = new Devolucao(emprestimo, idAtendente, hoje());
             movimentacao.inserirTransacao(devolucao);
             acervo.atualizarLivro(livro);
-            return comprovante(devolucao, livro);
+            return comprovante(devolucao, livro, List.of());
         });
+        // Depois do commit: publica o evento com os dados da devolução.
+        List<String> avisos = publicador.publicar(new EventoDevolucao(comprovante.idLivro(), comprovante.idEstudante(),
+                comprovante.idEmprestimo(), comprovante.vencimento(), comprovante.dataDevolucao()));
+        return comprovante.comAvisos(avisos);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -125,7 +139,9 @@ public class FachadaDeCirculacao {
 
     /** Decisão do atendente sobre o livro devolvido (B-17): bom estado → LIVRE; danificado → REPARANDO. */
     public ComprovanteDeSituacao inspecionar(long idLivro, boolean emBomEstado) {
-        return mudarSituacao("inspecionar", idLivro, l -> l.inspecionar(emBomEstado));
+        ComprovanteDeSituacao comprovante = mudarSituacao("inspecionar", idLivro, l -> l.inspecionar(emBomEstado));
+        filaDeInspecao.concluir(idLivro);
+        return comprovante;
     }
 
     public ComprovanteDeSituacao enviarParaReparo(long idLivro) {
@@ -160,7 +176,7 @@ public class FachadaDeCirculacao {
 
     public Optional<ComprovanteDevolucao> consultarDevolucao(long idLivro, long idEstudante) {
         return movimentacao.consultarDevolucao(idLivro, idEstudante)
-                .map(devolucao -> comprovante(devolucao, acervo.exigirLivro(idLivro)));
+                .map(devolucao -> comprovante(devolucao, acervo.exigirLivro(idLivro), List.of()));
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -194,8 +210,9 @@ public class FachadaDeCirculacao {
                 e.getDataTransacao(), e.getVencimento(), e.getNumRenovacoes(), livro.getSituacao());
     }
 
-    private static ComprovanteDevolucao comprovante(Devolucao d, Livro livro) {
+    private static ComprovanteDevolucao comprovante(Devolucao d, Livro livro, List<String> avisos) {
         return new ComprovanteDevolucao(d.getId(), d.getIdEmprestimo(), d.getIdLivro(), d.getIdEstudante(),
-                d.getIdAtendente(), d.getVencimento(), d.getDataDevolucao(), d.diasDeAtraso(), livro.getSituacao());
+                d.getIdAtendente(), d.getVencimento(), d.getDataDevolucao(), d.diasDeAtraso(), livro.getSituacao(),
+                avisos);
     }
 }
