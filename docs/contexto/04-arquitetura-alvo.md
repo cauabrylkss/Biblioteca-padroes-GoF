@@ -50,10 +50,12 @@ requer `iPessoa`. Corrige a duplicação C5.
 | State | `EstadoLivro` (classe abstrata: todo evento por padrão lança `TransicaoInvalidaException` **sem tocar no livro**) |
 | ConcreteState | `Livre`, `Reservado`, `Emprestado`, `Renovado`, `Devolvido`, `Reparando`, `Incinerado` |
 
-Eventos (1 método por transição na classe do estado de origem — ver máquina-alvo em `03-revisao-uml.md`):
-`reservar(Livro, idEstudante)`, `emprestar(Livro, idEstudante)`, `renovar(Livro, Emprestimo)`,
+Eventos (1 método por transição na classe do estado de origem — ver máquina-alvo em `03-revisao-uml.md`) — ✅ implementado:
+`reservar(Livro)`, `emprestar(Livro, Reserva, idEstudante)`, `renovar(Livro, Emprestimo)`,
 `registrarDevolucao(Livro)`, `inspecionar(Livro, boolean emBomEstado)`, `enviarParaReparo(Livro)`,
 `retornarDoReparo(Livro)`, `registrarLaudoIrrecuperavel(Livro)`, `excluir(Livro)`.
+Classes de estado são package-private e singletons (`INSTANCIA`); fora do pacote só se vê `Livro`, `EstadoLivro`
+(tipo), `SituacaoLivro` e `TransicaoInvalidaException`.
 
 - Guarda da renovação em `Emprestado.renovar` / `Renovado.renovar`: **primeiro** `if (emprestimo.getNumRenovacoes() >= 2) throw`,
   **depois** `emprestimo.prorrogar(30)` e troca de estado → a recusa nunca altera o vencimento.
