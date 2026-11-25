@@ -1,5 +1,6 @@
 package br.pucpr.biblioteca;
 
+import br.pucpr.biblioteca.biblioteca.circulacao.ComprovanteEmprestimo;
 import br.pucpr.biblioteca.compartilhado.RelogioAjustavel;
 import br.pucpr.biblioteca.config.Aplicacao;
 import java.time.LocalDate;
@@ -7,7 +8,7 @@ import java.util.Properties;
 
 /**
  * Aplicação montada pelo composition root no perfil de teste (memória), com relógio ajustável e um cadastro mínimo:
- * dois estudantes (Ana e Carla) e um atendente (Bruno). Usado pelos testes a partir do R07.
+ * dois estudantes (Ana e Carla) e um atendente (Bruno). Usado pelos testes R04–R08.
  */
 public final class CenarioDeTeste {
 
@@ -49,5 +50,12 @@ public final class CenarioDeTeste {
 
     public void livro(long id, String titulo) {
         app.tratadorDeAcervo().inserirLivro(id, titulo, null);
+    }
+
+    /** Cadastra o livro, reserva para o estudante e efetiva o empréstimo com o atendente Bruno. */
+    public ComprovanteEmprestimo emprestar(long idLivro, long idEstudante) {
+        livro(idLivro, "Livro " + idLivro);
+        app.tratadorDeEmprestimo().solicitarReserva(idLivro, idEstudante);
+        return app.tratadorDeEmprestimo().realizarEmprestimo(idLivro, idEstudante, bruno);
     }
 }

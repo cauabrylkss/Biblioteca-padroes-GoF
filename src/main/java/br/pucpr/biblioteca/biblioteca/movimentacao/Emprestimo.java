@@ -1,6 +1,7 @@
 package br.pucpr.biblioteca.biblioteca.movimentacao;
 
 import br.pucpr.biblioteca.compartilhado.DiasDeAtraso;
+import br.pucpr.biblioteca.compartilhado.RegraDeNegocioException;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -59,6 +60,14 @@ public final class Emprestimo extends Transacao {
 
     public boolean estaAtrasado(LocalDate dataDevolucao) {
         return diasDeAtraso(dataDevolucao) > 0;
+    }
+
+    /** Só o estudante que pegou o livro pode renová-lo ou devolvê-lo em seu nome. */
+    public void exigirEstudante(long idEstudante) {
+        if (getIdEstudante() != idEstudante) {
+            throw new RegraDeNegocioException(
+                    "O empréstimo do livro " + getIdLivro() + " não pertence ao estudante " + idEstudante + ".");
+        }
     }
 
     public long getIdAtendente() {

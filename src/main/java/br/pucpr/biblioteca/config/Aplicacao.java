@@ -5,7 +5,13 @@ import br.pucpr.biblioteca.academico.TratadorDeEstudante;
 import br.pucpr.biblioteca.academico.iEstudante;
 import br.pucpr.biblioteca.biblioteca.acervo.Acervo;
 import br.pucpr.biblioteca.biblioteca.acervo.OrganizacaoDoAcervo;
+import br.pucpr.biblioteca.biblioteca.circulacao.FachadaDeCirculacao;
+import br.pucpr.biblioteca.biblioteca.movimentacao.Movimentacao;
 import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeAcervo;
+import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeDevolucao;
+import br.pucpr.biblioteca.biblioteca.tratadores.TratadorDeEmprestimo;
+import br.pucpr.biblioteca.biblioteca.tratadores.iDevolucao;
+import br.pucpr.biblioteca.biblioteca.tratadores.iEmprestimo;
 import br.pucpr.biblioteca.biblioteca.tratadores.iLivro;
 import br.pucpr.biblioteca.cadastro.CadastroDeAtendente;
 import br.pucpr.biblioteca.cadastro.CadastroDeEstudante;
@@ -46,10 +52,10 @@ import java.util.Properties;
  *   <li><b>R2</b> — políticas de multa disponíveis e a vigente ({@code multa.politica}).
  *       <i>Nova política = nova classe + uma linha na lista de {@link #politicasDeMulta()}.</i></li>
  *   <li><b>R3</b> — banco da instalação ({@code banco}).</li>
- *   <li><b>R7</b> — cadastros e tratadores.</li>
+ *   <li><b>R4/R7</b> — fachada, cadastros e tratadores.</li>
  * </ul>
  * A interface (CLI) recebe apenas os tratadores ({@code iLivro}, {@code iPessoa}, {@code iEstudante},
- * {@code iAtendente}).
+ * {@code iAtendente}, {@code iEmprestimo}, {@code iDevolucao}).
  */
 public final class Aplicacao {
 
@@ -60,6 +66,7 @@ public final class Aplicacao {
 
     // pontos internos de acesso (Trabalho 02)
     private final Relacionamento relacionamento;
+    private final Movimentacao movimentacao;
     private final Acervo acervo;
 
     // financeiro
@@ -72,6 +79,8 @@ public final class Aplicacao {
     private final iPessoa tratadorDePessoa;
     private final iEstudante tratadorDeEstudante;
     private final iAtendente tratadorDeAtendente;
+    private final iEmprestimo tratadorDeEmprestimo;
+    private final iDevolucao tratadorDeDevolucao;
 
     private Aplicacao(Properties propriedades, Clock relogio) {
         this.propriedades = Objects.requireNonNull(propriedades, "propriedades");
@@ -83,6 +92,7 @@ public final class Aplicacao {
         UnidadeDeTrabalho unidadeDeTrabalho = fabrica.unidadeDeTrabalho();
 
         this.relacionamento = new Relacionamento(fabrica.relacionamento());
+        this.movimentacao = new Movimentacao(fabrica.movimentacao());
         this.acervo = new Acervo(fabrica.livros(), new OrganizacaoDoAcervo());
 
         // R2 + R3
@@ -92,11 +102,18 @@ public final class Aplicacao {
         this.servicoDeMultas = new ServicoDeMultas(configuracaoDeMultas, fabrica.multas(), banco.cobranca(),
                 pagadoresDoRelacionamento());
 
+        // R4
+        int prazo = Integer.parseInt(propriedade("emprestimo.prazo.dias", "30"));
+        FachadaDeCirculacao fachada = new FachadaDeCirculacao(relacionamento, movimentacao, acervo, unidadeDeTrabalho,
+                relogio, prazo);
+
         // R7 + tratadores
         this.tratadorDeAcervo = new TratadorDeAcervo(new CadastroDeLivro(acervo), acervo, unidadeDeTrabalho);
         this.tratadorDePessoa = new TratadorDePessoa(new CadastroDePessoa(relacionamento, relogio), relacionamento);
         this.tratadorDeEstudante = new TratadorDeEstudante(new CadastroDeEstudante(relacionamento), relacionamento);
         this.tratadorDeAtendente = new TratadorDeAtendente(new CadastroDeAtendente(relacionamento), relacionamento);
+        this.tratadorDeEmprestimo = new TratadorDeEmprestimo(fachada);
+        this.tratadorDeDevolucao = new TratadorDeDevolucao(fachada);
     }
 
     /** Monta a aplicação com a configuração e o relógio informados (testes usam um relógio ajustável). */
@@ -177,6 +194,14 @@ public final class Aplicacao {
 
     public iAtendente tratadorDeAtendente() {
         return tratadorDeAtendente;
+    }
+
+    public iEmprestimo tratadorDeEmprestimo() {
+        return tratadorDeEmprestimo;
+    }
+
+    public iDevolucao tratadorDeDevolucao() {
+        return tratadorDeDevolucao;
     }
 
     // ---------------------------------------------------------------------------------------------
