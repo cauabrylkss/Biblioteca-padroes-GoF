@@ -1,7 +1,7 @@
 package br.pucpr.biblioteca.biblioteca.movimentacao;
 
+import br.pucpr.biblioteca.compartilhado.DiasDeAtraso;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 /**
@@ -54,7 +54,7 @@ public class Emprestimo extends Transacao {
 
     /** Dias corridos de atraso na data informada; zero se devolvido até o vencimento (B-07). */
     public long diasDeAtraso(LocalDate dataDevolucao) {
-        return Math.max(0, ChronoUnit.DAYS.between(vencimento, dataDevolucao));
+        return DiasDeAtraso.entre(vencimento, dataDevolucao);
     }
 
     public boolean estaAtrasado(LocalDate dataDevolucao) {
