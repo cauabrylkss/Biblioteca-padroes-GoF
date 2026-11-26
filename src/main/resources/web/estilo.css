@@ -1,0 +1,148 @@
+/* Interface web do Sistema de Biblioteca — sem frameworks, sem fontes externas (funciona sem internet). */
+
+:root {
+  --fundo: #f4f5f7;
+  --painel: #ffffff;
+  --borda: #dfe2e7;
+  --texto: #1f2328;
+  --suave: #5c6570;
+  --destaque: #1f5fbf;
+  --ok: #1a7f37;
+  --ok-fundo: #e9f6ec;
+  --recusado: #9a6700;
+  --recusado-fundo: #fff6dc;
+  --erro: #c62828;
+  --erro-fundo: #fdecec;
+  --raio: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 15px/1.45 system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--fundo);
+}
+
+h1, h2, h3 { margin: 0; line-height: 1.2; }
+h2 { font-size: 1.05rem; margin: 1.2rem 0 .6rem; }
+h2:first-child { margin-top: 0; }
+h3 { font-size: .95rem; margin-bottom: .5rem; }
+small { color: var(--suave); font-weight: normal; font-size: .8em; }
+
+/* ---------- topo ---------- */
+.topo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: .25rem 1rem;
+  align-items: center;
+  padding: .9rem 1.5rem;
+  background: #16263d;
+  color: #fff;
+}
+.topo h1 { font-size: 1.3rem; }
+.subtitulo { margin: 0; color: #b8c4d6; font-size: .85rem; }
+.hoje { font-size: 1.05rem; background: rgba(255, 255, 255, .12); padding: .35rem .8rem; border-radius: var(--raio); }
+.instalacao { grid-column: 1 / -1; margin: .3rem 0 0; color: #b8c4d6; font-size: .8rem; }
+
+/* ---------- grade principal ---------- */
+.grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.5rem 2rem;
+  align-items: start;
+}
+@media (max-width: 1000px) { .grade { grid-template-columns: 1fr; } }
+
+.painel {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 1rem;
+}
+.lateral { display: grid; gap: 1rem; position: sticky; top: 1rem; }
+
+/* ---------- operar como ---------- */
+.atores { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: 1rem; }
+.atores .rotulo { color: var(--suave); margin-right: .3rem; }
+.atores button { background: var(--fundo); color: var(--texto); border-color: var(--borda); }
+.atores button.ativo { background: var(--destaque); color: #fff; border-color: var(--destaque); }
+
+.entrar {
+  display: flex; flex-wrap: wrap; gap: .6rem; align-items: end;
+  padding: .7rem; margin-bottom: 1rem;
+  background: var(--fundo); border-radius: var(--raio);
+}
+.entrar label { flex: 0 0 9rem; }
+.quem { padding: .45rem 0; font-weight: 600; }
+
+.nota { color: var(--suave); margin-top: 0; }
+
+/* operações de estudante/atendente só ficam disponíveis depois de "Entrar" */
+.operacoes[data-precisa]:not(.liberado) { opacity: .45; pointer-events: none; }
+
+.operacoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: .7rem;
+}
+.operacoes form {
+  display: flex; flex-direction: column; gap: .45rem;
+  border: 1px solid var(--borda); border-radius: var(--raio); padding: .75rem;
+}
+.operacoes form.largo { grid-column: 1 / -1; }
+.operacoes form > button, .botoes { margin-top: auto; }
+.botoes { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; color: var(--suave); }
+input, select {
+  font: inherit; color: var(--texto);
+  padding: .4rem .5rem; border: 1px solid var(--borda); border-radius: 6px; background: #fff;
+}
+input:focus, select:focus { outline: 2px solid var(--destaque); outline-offset: -1px; }
+
+button {
+  font: inherit; cursor: pointer;
+  padding: .42rem .8rem; border-radius: 6px;
+  border: 1px solid #c4cad3; background: #fff; color: var(--texto);
+}
+button:hover { filter: brightness(.96); }
+button.principal { background: var(--destaque); border-color: var(--destaque); color: #fff; }
+button.perigo { color: var(--erro); border-color: #e6b3b3; }
+button.discreto { border: none; color: var(--suave); padding: .2rem .5rem; }
+
+/* ---------- acervo ---------- */
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td { text-align: left; padding: .35rem .45rem; border-bottom: 1px solid var(--borda); vertical-align: top; }
+th { color: var(--suave); font-weight: 600; }
+td.grupo { color: var(--suave); font-size: .8rem; }
+tr.mudou { animation: realce 2.5s ease-out; }
+@keyframes realce { from { background: #fff3b0; } to { background: transparent; } }
+
+.situacao {
+  display: inline-block; padding: .1rem .45rem; border-radius: 999px;
+  font-size: .75rem; font-weight: 700; letter-spacing: .02em; white-space: nowrap;
+  background: #eceff3; color: #3b4450;
+}
+.situacao-LIVRE      { background: #e3f4e7; color: #1a7f37; }
+.situacao-RESERVADO  { background: #e4ecfb; color: #1f5fbf; }
+.situacao-EMPRESTADO { background: #efe7fb; color: #6f42c1; }
+.situacao-RENOVADO   { background: #f6e4f3; color: #a2367f; }
+.situacao-DEVOLVIDO  { background: #fff1d6; color: #9a6700; }
+.situacao-REPARANDO  { background: #ffe5d6; color: #b54708; }
+.situacao-INCINERADO { background: #3b4450; color: #fff; }
+
+/* ---------- histórico ---------- */
+.cabecalho-historico { display: flex; justify-content: space-between; align-items: center; }
+.cabecalho-historico h2 { margin: 0; }
+.historico { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; gap: .5rem; max-height: 60vh; overflow: auto; }
+.historico li { border-left: 4px solid var(--borda); background: var(--fundo); border-radius: 0 6px 6px 0; padding: .5rem .7rem; }
+.historico li.ok       { border-color: var(--ok); background: var(--ok-fundo); }
+.historico li.recusado { border-color: var(--recusado); background: var(--recusado-fundo); }
+.historico li.erro     { border-color: var(--erro); background: var(--erro-fundo); }
+.historico .cabecalho { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .3rem; }
+.historico code { font-size: .72rem; color: var(--suave); }
+.historico p { margin: .25rem 0 0; white-space: pre-wrap; }
+.historico table.dados { margin-top: .4rem; background: #fff; font-size: .78rem; }

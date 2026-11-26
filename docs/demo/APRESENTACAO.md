@@ -2,25 +2,38 @@
 
 Guia da equipe para a demonstração. Os comandos e as duas alterações ao vivo foram executados em 25/11 nesta máquina
 (tempos medidos: `mvnw test` ≈ 10 s, `mvnw package -DskipTests` ≈ 10 s, roteiro da CLI no MySQL ≈ 5 s).
+**A demo é feita pela interface web** (padrão desde a branch `web/interface-web`); a CLI continua como plano B.
 
 ## Antes de começar (na máquina da apresentação)
 - [ ] `git pull` na `main`; `java -version` mostra 25 (se mostrar 1.8, abrir um terminal novo).
 - [ ] Serviço `MySQL` rodando; `BIBLIOTECA_DB_SENHA` definida no terminal que será usado.
 - [ ] `./mvnw package` uma vez (gera `target/biblioteca.jar` e já confirma os testes).
-- [ ] `java -jar target/biblioteca.jar --reiniciar-dados` e sair com `0` — deixa o banco com os dados de exemplo.
-- [ ] Conferir os acentos no terminal escolhido (cmd, PowerShell ou VS Code): a primeira tela mostra "padrões".
+- [ ] Porta 8080 livre (se não estiver, acrescentar `--porta=8081` aos comandos e abrir esse endereço).
+- [ ] Navegador aberto; zoom da página em ~110–125% para o projetor.
 - [ ] Editor aberto em `config/Aplicacao.java` (métodos `politicasDeMulta()` e `registrarOuvintes()`).
-- [ ] Sem MySQL? Usar `--perfil=memoria` em todos os comandos da CLI (os ids e o boleto 1001 continuam iguais).
+- [ ] Sem MySQL? Usar `--perfil=memoria` em todos os comandos (os ids e o boleto 1001 continuam iguais).
 
 ## Roteiro
 | Tempo | O que fazer | O que dizer |
 |---|---|---|
 | 0:00–0:45 | `./mvnw test` | "Um teste por cenário de verificação, `R01_` a `R10_`, todos verdes, sem banco (perfil de memória)." |
-| 0:45–2:45 | `java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt` | Narrar o fluxo enquanto ele aparece (abaixo). |
+| 0:45–2:45 | `java -jar target/biblioteca.jar --reiniciar-dados` → o navegador abre em http://localhost:8080 → clicar o fluxo (abaixo) | Narrar cada passo; mostrar o livro mudando de situação no painel **Acervo agora** e o caminho `/api/iX/operacao` no **Histórico**. |
 | 2:45–4:45 | Alteração ao vivo (abaixo) | "Uma classe nova + uma linha no composition root; nenhuma classe existente muda." |
 | 4:45–5:00 | `./mvnw test` de novo (opcional) | "Nada quebrou." |
 
-### O que aparece no roteiro (para narrar)
+### O fluxo na página (o que clicar → o que narrar)
+Cliques, na ordem (dados de exemplo: estudante Ana = 1, atendente Bruno = 1, livro 1 = "Padrões de Projeto"):
+
+| # | Operar como | Formulário → valores |
+|---|---|---|
+| 1 | Estudante → id **1** → Entrar | Consultar livro → **1**; Solicitar reserva → **1**; Consultar livro → **1** |
+| 2 | Atendente → id **1** → Entrar | Realizar empréstimo → livro **1**, estudante **1** |
+| 3 | Estudante (já entrou) | Renovar empréstimo → **1** |
+| 4 | Ferramentas | Avançar o relógio → **65** |
+| 5 | Atendente | Registrar devolução → livro **1**, estudante **1**; Inspecionar → livro **1**, bom estado **Sim** |
+| 6 | Ferramentas | Simular pagamento → **1001** (duas vezes); Caixa de saída de e-mails |
+| 7 | Administrador | Medições da consulta ao acervo; Indicadores de devolução |
+
 1. **Estudante Ana** consulta o livro 1: título pela **consulta ao acervo** (R9 — medida e com cache) e **situação atual
    LIVRE** lida do repositório.
 2. Ana **solicita reserva** → solicitação vira objeto (**Command**, R6) → **fachada** (R4) → evento no livro (**State**,
@@ -41,7 +54,12 @@ Tudo isso grava no **MySQL** (Abstract Factory, R8: perfil `producao` escolhe a 
 Cadastros dos dados de exemplo passaram pelo **Template Method** (R7) e os livros estão na árvore do acervo
 (**Composite**, R10: Administrador → Acervo → Organização).
 
-Se preferir digitar em vez de usar o roteiro, as respostas estão em `docs/demo/roteiro-demo.txt`, na ordem.
+**Plano B (CLI):** se o navegador der problema, `java -jar target/biblioteca.jar --reiniciar-dados
+--roteiro=docs/demo/roteiro-demo.txt` faz o mesmo fluxo na linha de comando, com as mesmas mensagens.
+
+**Se perguntarem "a interface tem regra?":** não. Cada formulário chama uma operação de tratador
+(`interfaceusuario.web.InterfaceWeb`, uma rota por operação, só com campos de tratadores — teste
+`interfaceWebSoConheceTratadores`); a página só mostra o que volta. Recusa = HTTP 409 e o livro não muda.
 
 ## Alteração ao vivo
 O professor escolhe. As duas foram feitas e testadas; cada uma leva ~2 min. **Não commitar** depois (desfazer com
@@ -82,11 +100,11 @@ O professor escolhe. As duas foram feitas e testadas; cada uma leva ~2 min. **N�
            new PoliticaDobroAposDezDias());
    ```
    (+ `import br.pucpr.biblioteca.financeiro.PoliticaDobroAposDezDias;`)
-3. `./mvnw -q package -DskipTests` e rodar a CLI (`java -jar target/biblioteca.jar --reiniciar-dados`).
-4. Mostrar: **3** Administrador → **3** Política de multa → digitar `dobro`. Depois um atraso de 12 dias:
-   Estudante 1 reserva o livro 1 → Atendente 1 empresta (livro 1, estudante 1) → Ferramentas → avançar **42** dias →
-   Atendente 1 registra a devolução (livro 1, estudante 1) → **multa R$ 14,00, política dobro**.
-   Respostas, na ordem: `3 3 dobro 0 1 1 3 1 0 2 1 1 1 1 0 4 1 42 0 2 1 2 1 1 0`.
+3. Encerrar o servidor (Ctrl+C), `./mvnw -q package -DskipTests` e subir de novo (`java -jar target/biblioteca.jar --reiniciar-dados`).
+4. Mostrar: Administrador → **Políticas de multa** (aparece `dobro`) → **Trocar política** → `dobro`. Depois um
+   atraso de 12 dias: Estudante 1 reserva o livro 1 → Atendente 1 empresta (livro 1, estudante 1) → Ferramentas →
+   avançar **42** dias → Atendente 1 registra a devolução (livro 1, estudante 1) → **multa R$ 14,00, política dobro**.
+   (Na CLI, as respostas na ordem: `3 3 dobro 0 1 1 3 1 0 2 1 1 1 1 0 4 1 42 0 2 1 2 1 1 0`.)
 5. Pontos para falar: `ServicoDeMultas` (Context) não mudou e não tem `if` por política; a multa grava valor **e**
    código da política; multas antigas continuam com a política antiga.
 
@@ -110,10 +128,11 @@ O professor escolhe. As duas foram feitas e testadas; cada uma leva ~2 min. **N�
    publicador.registrar(new OuvinteAuditoria());
    ```
    (+ `import br.pucpr.biblioteca.biblioteca.circulacao.OuvinteAuditoria;`)
-3. `./mvnw -q package -DskipTests`, rodar a CLI e fazer uma devolução (pode ser o roteiro inteiro:
-   `--reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt`) → aparece `[Auditoria] livro 1 devolvido ...`.
+3. Encerrar o servidor (Ctrl+C), `./mvnw -q package -DskipTests`, subir de novo e fazer uma devolução pela página
+   (passos 1–5 do fluxo) → aparece `[Auditoria] livro 1 devolvido ...` **no terminal onde o servidor roda**.
+   (Ou pela CLI: `--reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt`.)
 4. Pontos para falar: fachada e tratadores não mudaram; o publicador chama cada ouvinte com `try/catch` (falha de um
-   não afeta os outros nem desfaz a devolução — dá para mostrar em Ferramentas → **5** falha do e-mail); publicação
+   não afeta os outros nem desfaz a devolução — dá para mostrar em Ferramentas → **Falha do e-mail**); publicação
    acontece **depois do commit**.
 
 `./mvnw test` continua verde com qualquer uma das duas alterações (conferido).
@@ -124,13 +143,16 @@ O professor escolhe. As duas foram feitas e testadas; cada uma leva ~2 min. **N�
 | "Não foi possível iniciar: Senha do MySQL não definida" | Definir `BIBLIOTECA_DB_SENHA` no terminal ou usar `--perfil=memoria`. |
 | Erro de conexão com o MySQL | `--perfil=memoria` (o fluxo é idêntico; só não grava). |
 | Boleto não é 1001 / ids diferentes | Faltou `--reiniciar-dados` (com dados de execuções anteriores os ids continuam a contagem). |
-| Acentos estranhos | Usar outro terminal (cmd ou VS Code) — a CLI troca o console para UTF-8 sozinha. |
+| "Não foi possível abrir a porta 8080" | Outro programa (ou o servidor anterior) está na porta: Ctrl+C no servidor antigo ou `--porta=8081`. |
+| Navegador não abriu sozinho | Abrir manualmente o endereço mostrado no terminal (`http://localhost:8080/`). |
+| Página mostra "Sem resposta do servidor" | O servidor foi encerrado: subir de novo. |
+| Acentos estranhos no terminal (CLI) | Usar outro terminal (cmd ou VS Code) — a CLI troca o console para UTF-8 sozinha. |
 | `java -version` mostra 1.8 | Abrir terminal novo (ou pôr `%JAVA_HOME%\bin` no início do PATH). |
 
 ## Arguição (individual)
 - Cada padrão tem um guia em `docs/estudo/Rxx-*.md` com papéis, perguntas do PDF e perguntas prováveis.
 - Mapa requisito → classes → testes: `docs/RASTREABILIDADE.md`.
 - UML: os diagramas não foram refatorados (A-09). Se perguntarem por divergências (ex.: nomes de eventos na máquina
-  de estados, "Interface Web", implantação), a lista e a correção de cada uma estão em `docs/contexto/03-revisao-uml.md`.
+  de estados, implantação em Tomcat), a lista e a correção de cada uma estão em `docs/contexto/03-revisao-uml.md`.
 - Limitações conhecidas (e por quê): `docs/contexto/06-decisoes.md` E-12 (estado em memória) e C-04 (ids de
   solicitações em memória).

@@ -71,7 +71,8 @@ padrões (grupo C) é do desenvolvimento (PR1).
   root**, sem editar classes existentes. Preservar isso.
 
 ## Stack e comandos
-- Interface **CLI**. JDK 25 compilando com `release 21` (mínimo 17), **Maven com wrapper**, JUnit 5 + AssertJ,
+- Interface **web** (padrão; `HttpServer` do JDK + `src/main/resources/web/index.html`/`app.js`, sem framework, E-14) e
+  **CLI** como reserva. JDK 25 compilando com `release 21` (mínimo 17), **Maven com wrapper**, JUnit 5 + AssertJ,
   MySQL Connector/J. Sem Spring.
 - Pacote raiz `br.pucpr.biblioteca`; subpacotes = componentes (ver `04-arquitetura-alvo.md`).
 - Comando único (meta): `./mvnw test` (Git Bash) / `mvnw.cmd test` (PowerShell).
@@ -81,10 +82,15 @@ padrões (grupo C) é do desenvolvimento (PR1).
   Maven no início do PATH. **MySQL**: serviço Windows `MySQL` em `localhost:3306` (sem Docker), banco e usuário
   `biblioteca` criados, `BIBLIOTECA_DB_USUARIO`/`BIBLIOTECA_DB_SENHA` definidas (usuário do Windows). Não usar o JDK
   interno do Astah para o projeto.
-- CLI: `java -jar target/biblioteca.jar` (perfil padrão `producao` = MySQL, D-09) · `--perfil=memoria` (plano B) ·
-  `--reiniciar-dados` · `--roteiro=docs/demo/roteiro-demo.txt` (fluxo da demo; executado também pelo `InterfaceCliTest`
-  — mudar a CLI exige manter o roteiro funcionando). Testes de integração com MySQL: `./mvnw test -Pmysql` (**apagam os
-  dados** do banco; depois rodar a CLI com `--reiniciar-dados`).
+- Rodar: `java -jar target/biblioteca.jar` (interface web em http://localhost:8080, perfil padrão `producao` = MySQL,
+  D-09) · `--perfil=memoria` (plano B) · `--reiniciar-dados` · `--porta=NNNN` · `--sem-navegador` · `--interface=cli`
+  · `--roteiro=docs/demo/roteiro-demo.txt` (implica a CLI; executado também pelo `InterfaceCliTest` — mudar a CLI exige
+  manter o roteiro funcionando).
+- Web: `interfaceusuario.web.InterfaceWeb` tem **uma rota por operação de tratador** (`GET|POST /api/{iInterface}/{operacao}`)
+  e só campos de tratadores; o `InterfaceWebTest` roda o fluxo da demo por HTTP e confere que todo formulário do
+  `index.html` aponta para uma rota existente — ao criar/renomear uma operação, mudar os dois. A página não tem regra
+  de domínio. Textos de comprovantes ficam em `interfaceusuario.Mensagens` (os mesmos na CLI e na web). Testes de integração com MySQL: `./mvnw test -Pmysql` (**apagam os
+  dados** do banco; depois rodar com `--reiniciar-dados`).
 
 ## Testes
 - **Um teste por cenário de verificação**, nome iniciando pelo requisito: `R01_terceiraRenovacaoRecusada`,

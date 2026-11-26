@@ -7,6 +7,10 @@ padrões corretos (40%) e testes passando (20%) primeiro; docs (10%) no fim.
 > (103 com `-Pmysql`) e a CLI rodando o fluxo da demonstração contra o MySQL. **A Fase 4 (refatoração da UML) foi
 > retirada do plano por decisão da equipe (25/11)** — ver Riscos. Falta a Fase 5 (documentação final, ensaio e treino)
 > e a entrega.
+>
+> **Interface web (25/11, noite — branch `web/interface-web`):** a web virou a interface padrão e a CLI ficou como
+> reserva (D-01 revista, E-14). Plano e checklist em [`07-plano-interface-web.md`](07-plano-interface-web.md);
+> 108 testes verdes (99 + 9 do `InterfaceWebTest`). O guia da apresentação já usa a web.
 
 ## Situação do ambiente (verificado em 24/11)
 - ✅ **JDK 25** (Microsoft, `C:\Program Files\Microsoft\jdk-25.0.5.102-hotspot`) e **Maven 3.10.2**

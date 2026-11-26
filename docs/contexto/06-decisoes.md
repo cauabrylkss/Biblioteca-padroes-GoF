@@ -16,7 +16,7 @@ Pela PR1, o **desenho interno dos padrões** (grupo C) é responsabilidade do de
 ## Já decididas
 | ID | Decisão | Valor |
 |---|---|---|
-| D-01 | Interface | ✅ **CLI** |
+| D-01 | Interface | ✅ **Web** (revista em 25/11, branch `web/interface-web`); a **CLI** continua como reserva (`--interface=cli`) — plano B da demo. Antes: CLI |
 | D-02 | Build | ✅ **Maven** 3.10.2 (`C:\Program Files\Apache\maven\apache-maven-3.10.2`) |
 | D-03 | JDK | ✅ **Microsoft OpenJDK 25.0.5** (`C:\Program Files\Microsoft\jdk-25.0.5.102-hotspot`) |
 | D-04 | Diagramas de classes UML | ✅ **Relevados** pelo professor (PR1) |
@@ -114,7 +114,8 @@ Aplicadas conforme a recomendação; a equipe só precisa se manifestar se disco
 | ID | Decisão | Recomendação | Quando |
 |---|---|---|---|
 | E-06 | Organização dos testes | ✅ Uma classe por requisito (`R01StateTest`…) com métodos `R01_…` | — |
-| E-07 | Como rodar a CLI | ✅ `java -jar target/biblioteca.jar [--perfil=memoria] [--reiniciar-dados] [--roteiro=arquivo]` + `mvnw exec:java -Dexec.args="..."` | ✅ |
+| E-07 | Como rodar | ✅ `java -jar target/biblioteca.jar [--perfil=memoria] [--reiniciar-dados] [--interface=web\|cli] [--porta=8080] [--sem-navegador] [--roteiro=arquivo]` + `mvnw exec:java -Dexec.args="..."`. Sem `--interface`, `--roteiro` escolhe a CLI (os comandos de plano B continuam iguais) | ✅ |
+| E-14 | Tecnologia da interface web | ✅ `com.sun.net.httpserver.HttpServer` do JDK (zero dependências, sem Spring/Tomcat), só em `localhost`, uma requisição por vez; API `GET`/`POST /api/{interfaceUml}/{operacao}` com parâmetros de formulário e resposta JSON `{ok, mensagens, dados}` (JSON escrito por `Json`, sem biblioteca); recusa do domínio = 409, dado inválido = 400, inexistente = 404; página `index.html` + `app.js` (JavaScript puro, sem CDN) + `estilo.css` em `src/main/resources/web/`. Textos iguais aos da CLI (`interfaceusuario.Mensagens`) | ✅ |
 | E-11 | Operações de administração/demonstração na CLI | ✅ `config.iAdministracao` / `TratadorDeAdministracao` (política de multa, grupos do acervo, medições, indicadores, relógio, pagamento simulado, e-mails) — a CLI continua falando só com tratadores | ✅ |
 | E-13 | Acentos no console do Windows | ✅ `interfaceusuario.ConsoleDoWindows`: troca o console para UTF-8 (`chcp 65001`) durante a execução e restaura ao sair; teclado lido em UTF-8 (sem console: UTF-8); saída continua forçada em UTF-8 no `Main`; sem os símbolos ✓ ✗ ⚠ ● (ausentes da fonte padrão do console) | ✅ |
 | E-12 | Estado que não vai para o MySQL | Fila de inspeção, indicadores, ids de solicitações executadas (C-04), árvore do acervo (C-08) e bancos simulados ficam em memória e recomeçam a cada execução (citado no README); os bancos simulados retomam ao subir o que está gravado — numeração de boletos e eventos e boletos em aberto (D-12, D-13). Inspeção continua funcionando após reiniciar (decide o estado do livro); só a **listagem** de pendências recomeça vazia | 🟢 |

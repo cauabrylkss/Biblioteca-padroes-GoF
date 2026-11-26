@@ -17,19 +17,15 @@ import br.pucpr.biblioteca.biblioteca.tratadores.iLivro;
 import br.pucpr.biblioteca.cadastro.Resultado;
 import br.pucpr.biblioteca.compartilhado.RegraDeNegocioException;
 import br.pucpr.biblioteca.config.iAdministracao;
-import br.pucpr.biblioteca.financeiro.ResultadoDaNotificacao;
 import br.pucpr.biblioteca.financeiro.ResumoDaMulta;
 import br.pucpr.biblioteca.interfaceusuario.EntradaSaida.FimDaEntrada;
 import br.pucpr.biblioteca.rh.FichaDaPessoa;
 import br.pucpr.biblioteca.rh.FichaDoPapel;
 import br.pucpr.biblioteca.rh.iAtendente;
 import br.pucpr.biblioteca.rh.iPessoa;
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -41,9 +37,6 @@ import java.util.Optional;
  * (Command, R6) criadas aqui, com o autor e o relógio da aplicação.
  */
 public class InterfaceCli {
-
-    private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final Locale BRASIL = Locale.of("pt", "BR");
 
     private final iLivro acervo;
     private final iPessoa pessoas;
@@ -139,14 +132,13 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         ComprovanteReserva c = emprestimos.solicitarReserva(
                 SolicitacaoDeReserva.nova(autor, relogio, idLivro, idEstudante));
-        es.mostrar("OK: Reserva " + c.idReserva() + " em " + data(c.dataReserva()) + ": livro " + c.idLivro()
-                + " agora está " + c.situacaoLivro() + ".");
+        es.mostrar("OK: " + Mensagens.reserva(c));
     }
 
     private void consultarReserva(long idEstudante) {
         long idLivro = es.lerNumero("Id do livro");
         emprestimos.consultarReservaLivro(idLivro, idEstudante).ifPresentOrElse(
-                c -> es.mostrar("  Reserva " + c.idReserva() + " de " + data(c.dataReserva()) + " — livro "
+                c -> es.mostrar("  Reserva " + c.idReserva() + " de " + Mensagens.data(c.dataReserva()) + " — livro "
                         + c.situacaoLivro()),
                 () -> es.mostrar("Nenhuma reserva sua para o livro " + idLivro + "."));
     }
@@ -155,15 +147,13 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         ComprovanteRenovacao c = emprestimos.renovarEmprestimo(
                 SolicitacaoDeRenovacao.nova(autor, relogio, idLivro, idEstudante));
-        es.mostrar("OK: Empréstimo " + c.idEmprestimo() + " renovado: vencimento " + data(c.vencimentoAnterior())
-                + " → " + data(c.novoVencimento()) + " (renovações feitas: " + c.numRenovacoes() + "). Livro "
-                + c.situacaoLivro() + ".");
+        es.mostrar("OK: " + Mensagens.renovacao(c));
     }
 
     private void consultarEmprestimo(long idEstudante) {
         long idLivro = es.lerNumero("Id do livro");
         emprestimos.consultarEmprestimo(idLivro, idEstudante).ifPresentOrElse(
-                c -> es.mostrar("  " + descrever(c)),
+                c -> es.mostrar("  " + Mensagens.emprestimo(c)),
                 () -> es.mostrar("Nenhum empréstimo ativo do livro " + idLivro + " para o estudante " + idEstudante
                         + "."));
     }
@@ -173,7 +163,7 @@ public class InterfaceCli {
         if (multas.isEmpty()) {
             es.mostrar("Nenhuma multa.");
         }
-        multas.forEach(m -> es.mostrar("  " + descrever(m)));
+        multas.forEach(m -> es.mostrar("  " + Mensagens.multa(m)));
     }
 
     // =============================================================================================
@@ -206,20 +196,18 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         long idEstudante = es.lerNumero("Id do estudante");
         ComprovanteEmprestimo c = emprestimos.realizarEmprestimo(idLivro, idEstudante, idAtendente);
-        es.mostrar("OK: " + descrever(c));
+        es.mostrar("OK: " + Mensagens.emprestimo(c));
     }
 
     private void registrarDevolucao(long idAtendente) {
         long idLivro = es.lerNumero("Id do livro");
         long idEstudante = es.lerNumero("Id do estudante");
         ComprovanteDevolucao c = devolucoes.registrarDevolucao(idLivro, idEstudante, idAtendente);
-        es.mostrar("OK: Devolução " + c.idDevolucao() + " do empréstimo " + c.idEmprestimo() + ": vencimento "
-                + data(c.vencimento()) + ", devolvido em " + data(c.dataDevolucao()) + ", atraso de "
-                + c.diasDeAtraso() + " dia(s). Livro " + c.situacaoLivro() + " — aguarda inspeção.");
+        es.mostrar("OK: " + Mensagens.devolucao(c));
         c.avisos().forEach(aviso -> es.mostrar("  Aviso: " + aviso));
         // a multa é emitida automaticamente pelo ouvinte da devolução (R5, B-12); aqui só é consultada
         devolucoes.emitirBoletoDeMulta(idLivro, idEstudante).ifPresentOrElse(
-                m -> es.mostrar("  Multa emitida: " + descrever(m)),
+                m -> es.mostrar("  Multa emitida: " + Mensagens.multa(m)),
                 () -> es.mostrar("  Sem multa."));
     }
 
@@ -234,7 +222,8 @@ public class InterfaceCli {
         if (pendencias.isEmpty()) {
             es.mostrar("Nenhum livro aguardando inspeção.");
         }
-        pendencias.forEach(p -> es.mostrar("  Livro " + p.idLivro() + " — devolvido em " + data(p.dataDevolucao())
+        pendencias.forEach(p -> es.mostrar("  Livro " + p.idLivro() + " — devolvido em "
+                + Mensagens.data(p.dataDevolucao())
                 + " pelo estudante " + p.idEstudante() + " (atraso: " + p.diasDeAtraso() + " dia(s))"));
     }
 
@@ -242,7 +231,7 @@ public class InterfaceCli {
         long idLivro = es.lerNumero("Id do livro");
         long idEstudante = es.lerNumero("Id do estudante");
         devolucoes.emitirBoletoDeMulta(idLivro, idEstudante).ifPresentOrElse(
-                m -> es.mostrar("  " + descrever(m)),
+                m -> es.mostrar("  " + Mensagens.multa(m)),
                 () -> es.mostrar("Nenhuma multa para a última devolução desse livro por esse estudante."));
     }
 
@@ -265,7 +254,7 @@ public class InterfaceCli {
                 new Opcao("2", "Cadastrar livro", this::cadastrarLivro),
                 new Opcao("3", "Alterar título", () -> {
                     long id = es.lerNumero("Id do livro");
-                    es.mostrar("OK: " + descrever(acervo.atualizarLivro(id, es.ler("Novo título"))));
+                    es.mostrar("OK: " + Mensagens.livro(acervo.atualizarLivro(id, es.ler("Novo título"))));
                 }),
                 new Opcao("4", "Excluir livro", () -> {
                     long id = es.lerNumero("Id do livro");
@@ -286,7 +275,7 @@ public class InterfaceCli {
         if (livros.isEmpty()) {
             es.mostrar("Acervo vazio.");
         }
-        livros.forEach(f -> es.mostrar("  " + descrever(f)));
+        livros.forEach(f -> es.mostrar("  " + Mensagens.livro(f)));
     }
 
     private void cadastrarLivro() {
@@ -295,7 +284,7 @@ public class InterfaceCli {
         mostrarOrganizacao();
         Long idGrupo = es.lerNumeroOpcional("Id do grupo (em branco = não catalogar)");
         Resultado<FichaDoLivro> r = acervo.inserirLivro(id, titulo, idGrupo);
-        es.mostrar((r.novo() ? "OK: Cadastrado: " : "Já existia um livro com esse id: ") + descrever(r.cadastro()));
+        es.mostrar((r.novo() ? "OK: Cadastrado: " : "Já existia um livro com esse id: ") + Mensagens.livro(r.cadastro()));
     }
 
     private void mostrarOrganizacao() {
@@ -312,18 +301,18 @@ public class InterfaceCli {
                     if (lista.isEmpty()) {
                         es.mostrar("Nenhuma pessoa cadastrada.");
                     }
-                    lista.forEach(p -> es.mostrar("  " + descrever(p)));
+                    lista.forEach(p -> es.mostrar("  " + Mensagens.pessoa(p)));
                 }),
                 new Opcao("2", "Cadastrar pessoa", () -> {
                     String nome = es.ler("Nome");
                     String sobrenome = es.ler("Sobrenome");
                     Resultado<FichaDaPessoa> r = pessoas.inserirPessoa(nome, sobrenome, es.ler("CPF"));
-                    es.mostrar((r.novo() ? "OK: Cadastrada: " : "CPF já cadastrado: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Cadastrada: " : "CPF já cadastrado: ") + Mensagens.pessoa(r.cadastro()));
                 }),
                 new Opcao("3", "Alterar nome de pessoa", () -> {
                     long id = es.lerNumero("Id da pessoa");
                     String nome = es.ler("Nome");
-                    es.mostrar("OK: " + descrever(pessoas.atualizarPessoa(id, nome, es.ler("Sobrenome"))));
+                    es.mostrar("OK: " + Mensagens.pessoa(pessoas.atualizarPessoa(id, nome, es.ler("Sobrenome"))));
                 }),
                 new Opcao("4", "Excluir pessoa", () -> {
                     long id = es.lerNumero("Id da pessoa");
@@ -332,21 +321,21 @@ public class InterfaceCli {
                 }),
                 new Opcao("5", "Tornar estudante (pelo CPF)", () -> {
                     Resultado<FichaDoPapel> r = estudantes.inserirEstudante(es.ler("CPF"));
-                    es.mostrar((r.novo() ? "OK: Estudante cadastrado: " : "Já era estudante: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Estudante cadastrado: " : "Já era estudante: ") + Mensagens.papel(r.cadastro()));
                 }),
                 new Opcao("6", "Tornar atendente (pelo CPF)", () -> {
                     Resultado<FichaDoPapel> r = atendentes.inserirAtendente(es.ler("CPF"));
-                    es.mostrar((r.novo() ? "OK: Atendente cadastrado: " : "Já era atendente: ") + descrever(r.cadastro()));
+                    es.mostrar((r.novo() ? "OK: Atendente cadastrado: " : "Já era atendente: ") + Mensagens.papel(r.cadastro()));
                 }),
                 new Opcao("7", "Consultar estudante", () -> {
                     long id = es.lerNumero("Id do estudante");
                     estudantes.consultarEstudante(id).ifPresentOrElse(
-                            e -> es.mostrar("  " + descrever(e)), () -> es.mostrar("Estudante não cadastrado: " + id));
+                            e -> es.mostrar("  " + Mensagens.papel(e)), () -> es.mostrar("Estudante não cadastrado: " + id));
                 }),
                 new Opcao("8", "Consultar atendente", () -> {
                     long id = es.lerNumero("Id do atendente");
                     atendentes.consultarAtendente(id).ifPresentOrElse(
-                            a -> es.mostrar("  " + descrever(a)), () -> es.mostrar("Atendente não cadastrado: " + id));
+                            a -> es.mostrar("  " + Mensagens.papel(a)), () -> es.mostrar("Atendente não cadastrado: " + id));
                 }),
                 new Opcao("9", "Excluir estudante", () -> {
                     long id = es.lerNumero("Id do estudante");
@@ -394,12 +383,12 @@ public class InterfaceCli {
         menu("Ferramentas da demonstração", "Voltar",
                 new Opcao("1", "Avançar o relógio", () -> {
                     LocalDate hoje = administracao.avancarDias(es.lerNumero("Quantos dias"));
-                    es.mostrar("OK: Hoje agora é " + data(hoje) + ".");
+                    es.mostrar("OK: Hoje agora é " + Mensagens.data(hoje) + ".");
                 }),
                 new Opcao("2", "Multas de um estudante", () -> mostrarMultas(es.lerNumero("Id do estudante"))),
                 new Opcao("3", "Simular pagamento de boleto no banco", () -> {
                     String boleto = es.ler("Identificador do boleto");
-                    es.mostrar("  Banco → Financeiro: " + descrever(administracao.simularPagamento(boleto)));
+                    es.mostrar("  Banco → Financeiro: " + Mensagens.notificacao(administracao.simularPagamento(boleto)));
                 }),
                 new Opcao("4", "Caixa de saída de e-mails", () -> {
                     var emails = administracao.emailsEnviados();
@@ -425,7 +414,7 @@ public class InterfaceCli {
     private void menu(String titulo, String rotuloDoZero, Opcao... opcoes) {
         while (true) {
             es.mostrar("");
-            es.mostrar("── " + titulo + " ── hoje: " + data(administracao.hoje()));
+            es.mostrar("── " + titulo + " ── hoje: " + Mensagens.data(administracao.hoje()));
             for (Opcao opcao : opcoes) {
                 es.mostrar("  " + opcao.tecla() + ") " + opcao.rotulo());
             }
@@ -458,49 +447,6 @@ public class InterfaceCli {
     }
 
     private void mostrar(ComprovanteDeSituacao c) {
-        es.mostrar("OK: " + c.operacao() + ": livro " + c.idLivro() + " " + c.situacaoAnterior() + " → "
-                + c.situacaoLivro() + " (" + data(c.data()) + ")");
-    }
-
-    private static String descrever(FichaDoLivro f) {
-        return "[" + f.id() + "] " + f.titulo() + " — " + f.situacao()
-                + (f.grupo() == null ? "" : " — " + f.grupo());
-    }
-
-    private static String descrever(ComprovanteEmprestimo c) {
-        return "Empréstimo " + c.idEmprestimo() + ": livro " + c.idLivro() + " para o estudante " + c.idEstudante()
-                + " (atendente " + c.idAtendente() + ") em " + data(c.dataEmprestimo()) + ", vence em "
-                + data(c.vencimento()) + ", renovações: " + c.numRenovacoes() + ". Livro " + c.situacaoLivro() + ".";
-    }
-
-    private static String descrever(ResumoDaMulta m) {
-        return "Multa " + m.idMulta() + ": " + dinheiro(m.valor()) + " por " + m.diasDeAtraso()
-                + " dia(s) de atraso (política " + m.politica() + ", emitida em " + data(m.dataEmissao()) + ") — "
-                + m.estado() + (m.identificadorDoBoleto() == null ? ""
-                : " | boleto " + m.identificadorDoBoleto() + " no banco " + m.banco() + " — " + m.situacaoDoBoleto());
-    }
-
-    private static String descrever(FichaDaPessoa p) {
-        return "[" + p.id() + "] " + p.nome() + " " + p.sobrenome() + " — CPF " + p.cpf();
-    }
-
-    private static String descrever(FichaDoPapel p) {
-        return "id " + p.id() + " — " + p.nomeCompleto() + " (pessoa " + p.idPessoa() + ", CPF " + p.cpf() + ")";
-    }
-
-    private static String descrever(ResultadoDaNotificacao resultado) {
-        return switch (resultado) {
-            case MULTA_QUITADA -> "pagamento confirmado: boleto PAGO, multa QUITADA, estudante avisado por e-mail.";
-            case IGNORADA_JA_PROCESSADA -> "notificação repetida ou multa já quitada — nada alterado.";
-            case IGNORADA_SEM_PAGAMENTO -> "notificação sem pagamento — nada alterado.";
-        };
-    }
-
-    private static String data(LocalDate data) {
-        return data == null ? "-" : DATA.format(data);
-    }
-
-    private static String dinheiro(BigDecimal valor) {
-        return String.format(BRASIL, "R$ %,.2f", valor);
+        es.mostrar("OK: " + Mensagens.situacao(c));
     }
 }
