@@ -10,7 +10,7 @@ Princípios (vêm do enunciado, não negociáveis):
 
 ## Stack
 - JDK 25 instalado, compilando com `maven.compiler.release=21` (≥17 exigido; ver E-01), **Maven** com **Maven Wrapper** (`mvnw`) → comando único `./mvnw test` / `mvnw.cmd test`.
-- Interface: **CLI** (D-01).
+- Interface: **Web** (D-01 revista, E-14) — `HttpServer` do JDK + `index.html`/JavaScript puro, sem framework. A **CLI** continua como reserva (`--interface=cli`).
 - JUnit 5 + AssertJ. MySQL Connector/J para a família relacional. Sem Spring (menos mágica para explicar na arguição).
 - Composition root manual (`config.Aplicacao`), sem framework de injeção.
 
@@ -35,7 +35,9 @@ br.pucpr.biblioteca
 ├── persistencia/          FabricaDePersistencia, UnidadeDeTrabalho, Repositorio* (R8)
 │   ├── memoria/           FabricaEmMemoria + repositórios/UoW em memória
 │   └── jdbc/              FabricaRelacional (MySQL) + repositórios/UoW JDBC, schema.sql
-├── interfaceusuario/      InterfaceCli, EntradaSaida (roteiro), Tratadores, OpcoesDaLinhaDeComando (só chama tratadores)
+├── interfaceusuario/      Tratadores, OpcoesDaLinhaDeComando, Mensagens (textos comuns) · InterfaceCli, EntradaSaida, ConsoleDoWindows (CLI)
+│   └── web/               ServidorWeb (HttpServer), InterfaceWeb (uma rota por operação de tratador), Json, Requisicao
+│                          + src/main/resources/web/ index.html, app.js, estilo.css (só chama tratadores, via /api/*)
 └── config/                Aplicacao (composition root), PerfilDeExecucao, BancoDaInstalacao, DadosDeExemplo,
                            iAdministracao/TratadorDeAdministracao (Administrador + ferramentas da demonstração)
 ```
@@ -147,7 +149,7 @@ Qualquer exceção → `uow.desfazer()` (nada fica parcial).
 | ConcreteCommand | `SolicitacaoDeReserva`, `SolicitacaoDeRenovacao` |
 | Invoker | `ExecutorDeSolicitacoes` (`ConcurrentHashMap<UUID, CompletableFuture<Comprovante>>.computeIfAbsent` → 2 submissões simultâneas com o mesmo id executam uma vez) |
 | Receiver | `FachadaDeCirculacao` → domínio |
-| Client | CLI cria a solicitação → `TratadorDeEmprestimo.submeter(solicitacao)` → executor |
+| Client | Interface (web: `InterfaceWeb`; CLI: `InterfaceCli`) cria a solicitação → `TratadorDeEmprestimo.solicitarReserva/renovarEmprestimo` → executor |
 
 Sem `desfazer`: circulação é fato registrado com efeitos externos (e-mail, boleto); correção é nova operação de domínio.
 - Implementado: `ExecutorDeSolicitacoes` usa `putIfAbsent` de um `CompletableFuture` (a execução acontece **fora** do

@@ -7,18 +7,26 @@ import br.pucpr.biblioteca.interfaceusuario.EntradaSaida;
 import br.pucpr.biblioteca.interfaceusuario.InterfaceCli;
 import br.pucpr.biblioteca.interfaceusuario.OpcoesDaLinhaDeComando;
 import br.pucpr.biblioteca.interfaceusuario.Tratadores;
+import br.pucpr.biblioteca.interfaceusuario.web.InterfaceWeb;
+import br.pucpr.biblioteca.interfaceusuario.web.ServidorWeb;
+import java.awt.Desktop;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.Properties;
 
 /**
- * Ponto de entrada da aplicação de linha de comando ({@code java -jar target/biblioteca.jar}, E-07).
+ * Ponto de entrada da aplicação ({@code java -jar target/biblioteca.jar}, E-07).
  *
  * <p>Lê as opções, pede ao composition root ({@link Aplicacao}) a aplicação montada — o perfil escolhe a família de
- * persistência uma única vez (R8) —, prepara os dados de exemplo e entrega à CLI <b>só os tratadores</b>.
+ * persistência uma única vez (R8) —, prepara os dados de exemplo e entrega à interface <b>só os tratadores</b>:
+ * a web ({@link InterfaceWeb}, padrão) ou a CLI ({@link InterfaceCli}, reserva).
  * {@code Main} não contém regra de negócio.
  */
 public final class Main {
@@ -49,11 +57,9 @@ public final class Main {
         RelogioAjustavel relogio = RelogioAjustavel.agoraDoSistema();     // ajustável: "avançar o relógio" (C-11)
 
         Aplicacao app;
-        EntradaSaida entradaSaida;
         try {
             app = Aplicacao.montar(propriedades, relogio);
             app.prepararParaUso(opcoes.reiniciarDados());
-            entradaSaida = EntradaSaida.doConsole(opcoes.roteiro(), charsetDoTeclado);
         } catch (RuntimeException falha) {
             System.err.println("Não foi possível iniciar: " + falha.getMessage());
             System.err.println("Para usar sem MySQL: java -jar target/biblioteca.jar --perfil=memoria");
@@ -64,6 +70,56 @@ public final class Main {
         Tratadores tratadores = new Tratadores(app.tratadorDeAcervo(), app.tratadorDePessoa(),
                 app.tratadorDeEstudante(), app.tratadorDeAtendente(), app.tratadorDeEmprestimo(),
                 app.tratadorDeDevolucao(), app.tratadorDeAdministracao());
+        if (opcoes.web()) {
+            iniciarInterfaceWeb(tratadores, relogio, opcoes);
+        } else {
+            iniciarCli(tratadores, relogio, opcoes, charsetDoTeclado);
+        }
+    }
+
+    /**
+     * Interface web (padrão): sobe o servidor HTTP em {@code localhost}, mostra o endereço e tenta abrir o navegador.
+     * O programa continua rodando até Ctrl+C (o servidor é encerrado pelo gancho de desligamento).
+     */
+    private static void iniciarInterfaceWeb(Tratadores tratadores, Clock relogio, OpcoesDaLinhaDeComando opcoes) {
+        ServidorWeb servidor;
+        try {
+            servidor = new ServidorWeb(new InterfaceWeb(tratadores, relogio), opcoes.porta());
+        } catch (UncheckedIOException portaOcupada) {
+            System.err.println(portaOcupada.getMessage());
+            System.exit(1);
+            return;
+        }
+        servidor.iniciar();
+        Runtime.getRuntime().addShutdownHook(new Thread(servidor::parar));
+        System.out.println("Interface web em " + servidor.endereco() + "  (Ctrl+C para encerrar)");
+        if (opcoes.abrirNavegador()) {
+            abrirNavegador(servidor.endereco());
+        }
+    }
+
+    /** Abre o navegador padrão; se não der (sem interface gráfica), o endereço já foi mostrado no terminal. */
+    private static void abrirNavegador(URI endereco) {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(endereco);
+            }
+        } catch (IOException | RuntimeException semNavegador) {
+            System.out.println("Abra o endereço acima no navegador.");
+        }
+    }
+
+    /** CLI (reserva, {@code --interface=cli} ou {@code --roteiro=...}). */
+    private static void iniciarCli(Tratadores tratadores, Clock relogio, OpcoesDaLinhaDeComando opcoes,
+                                   Charset charsetDoTeclado) {
+        EntradaSaida entradaSaida;
+        try {
+            entradaSaida = EntradaSaida.doConsole(opcoes.roteiro(), charsetDoTeclado);
+        } catch (RuntimeException falha) {
+            System.err.println("Não foi possível iniciar: " + falha.getMessage());
+            System.exit(1);
+            return;
+        }
         new InterfaceCli(tratadores, relogio, entradaSaida).executar();
     }
 
