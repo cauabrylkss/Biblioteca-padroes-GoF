@@ -5,6 +5,10 @@ import br.pucpr.biblioteca.banco.BancoBApi;
 import br.pucpr.biblioteca.financeiro.cobranca.AdaptadorBancoA;
 import br.pucpr.biblioteca.financeiro.cobranca.AdaptadorBancoB;
 import br.pucpr.biblioteca.financeiro.cobranca.ServicoDeCobranca;
+import br.pucpr.biblioteca.financeiro.Boleto;
+import br.pucpr.biblioteca.financeiro.Multa;
+import br.pucpr.biblioteca.financeiro.RepositorioDeMultas;
+import java.math.BigDecimal;
 import java.util.Collection;
 
 /**
@@ -29,10 +33,35 @@ public final class BancoDaInstalacao {
          * numeração depois do maior deles (D-12).
          */
         void continuarNumeracaoApos(Collection<String> identificadoresJaEmitidos);
+
+        /**
+         * Mesmo problema para os eventos de pagamento: o Financeiro grava as notificações já processadas, e um evento
+         * novo com identificador já usado seria ignorado como repetido. O simulador continua depois do maior (D-13).
+         */
+        void continuarEventosApos(Collection<String> notificacoesJaProcessadas);
+
+        /** Devolve ao banco simulado um boleto ainda em aberto, emitido numa execução anterior (D-13). */
+        void reabrirBoleto(String identificadorNoBanco, BigDecimal valor, long idMulta);
     }
 
-    /** O adaptador entregue ao sistema e o simulador usado pela CLI/testes. */
+    /** O adaptador entregue ao sistema e o simulador usado pela interface/testes. */
     public record BancoConfigurado(ServicoDeCobranca cobranca, SimuladorDePagamento simulador) {
+
+        /**
+         * Ao subir a aplicação, faz o banco simulado (que vive só na memória) retomar o que um banco real lembraria
+         * entre as execuções: a numeração dos boletos (D-12), a dos eventos de pagamento e os boletos ainda em aberto
+         * (D-13). Sem isso, depois de reiniciar, um pagamento novo era ignorado como "notificação repetida" e um
+         * boleto emitido antes do reinício não podia mais ser pago.
+         */
+        public void retomar(RepositorioDeMultas multas) {
+            String codigoDoBanco = cobranca.banco();
+            simulador.continuarNumeracaoApos(multas.identificadoresDeBoleto(codigoDoBanco));
+            simulador.continuarEventosApos(multas.identificadoresDeNotificacao(codigoDoBanco));
+            for (Multa multa : multas.listarComBoletoEmAberto(codigoDoBanco)) {
+                Boleto boleto = multa.getBoleto().orElseThrow();
+                simulador.reabrirBoleto(boleto.getIdentificadorNoBanco(), boleto.getValor(), multa.getId());
+            }
+        }
     }
 
     private BancoDaInstalacao() {
@@ -53,6 +82,16 @@ public final class BancoDaInstalacao {
                     public void continuarNumeracaoApos(Collection<String> ids) {
                         api.continuarNumeracaoApos(maiorNumero(ids));
                     }
+
+                    @Override
+                    public void continuarEventosApos(Collection<String> eventos) {
+                        api.continuarEventosApos(maiorNumero(eventos));            // "EVT-A-7" → 7
+                    }
+
+                    @Override
+                    public void reabrirBoleto(String id, BigDecimal valor, long idMulta) {
+                        api.restaurarTitulo(Long.parseLong(id), idMulta, AdaptadorBancoA.paraCentavos(valor));
+                    }
                 });
             }
             case AdaptadorBancoB.CODIGO_BANCO -> {
@@ -66,6 +105,17 @@ public final class BancoDaInstalacao {
                     @Override
                     public void continuarNumeracaoApos(Collection<String> ids) {
                         api.continuarNumeracaoApos(maiorNumero(ids));
+                    }
+
+                    @Override
+                    public void continuarEventosApos(Collection<String> eventos) {
+                        api.continuarEventosApos(maiorNumero(eventos));            // "ev-b-7" → 7
+                    }
+
+                    @Override
+                    public void reabrirBoleto(String id, BigDecimal valor, long idMulta) {
+                        // mesma referência usada na emissão (AdaptadorBancoB.registrar)
+                        api.restaurarBoleto(id, "MULTA-" + idMulta, AdaptadorBancoB.paraTextoComVirgula(valor));
                     }
                 });
             }

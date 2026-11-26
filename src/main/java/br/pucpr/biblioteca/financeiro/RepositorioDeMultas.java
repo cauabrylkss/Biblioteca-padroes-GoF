@@ -22,6 +22,15 @@ public interface RepositorioDeMultas {
     List<String> identificadoresDeBoleto(String banco);
 
     /**
+     * Identificadores das notificações já processadas do banco informado (para o banco simulado não repetir o
+     * identificador de um evento de pagamento depois de reiniciar a aplicação, D-13).
+     */
+    List<String> identificadoresDeNotificacao(String banco);
+
+    /** Multas cujo boleto no banco informado ainda está em aberto (EMITIDO), na ordem de emissão (D-13). */
+    List<Multa> listarComBoletoEmAberto(String banco);
+
+    /**
      * Marca uma notificação de pagamento como processada.
      *
      * @return {@code true} se é a primeira vez; {@code false} se essa notificação já tinha sido registrada

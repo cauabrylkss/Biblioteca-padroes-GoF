@@ -169,14 +169,15 @@ public final class Aplicacao {
     /**
      * Deixa a aplicação pronta para a CLI (chamado pelo {@code Main}, nunca na montagem — montar não conecta no banco):
      * apaga os dados se pedido ({@code --reiniciar-dados}), carrega os dados de exemplo (D-10) e faz o banco simulado
-     * continuar a numeração dos boletos já gravados (D-12).
+     * retomar o que já está gravado: numeração dos boletos (D-12), numeração dos eventos de pagamento e boletos ainda em
+     * aberto (D-13).
      */
     public void prepararParaUso(boolean reiniciarDados) {
         if (reiniciarDados && fabrica instanceof FabricaRelacional relacional) {
             relacional.apagarTodosOsDados();          // na memória não há o que apagar: cada execução começa vazia
         }
         DadosDeExemplo.carregar(this);
-        banco.simulador().continuarNumeracaoApos(fabrica.multas().identificadoresDeBoleto(banco.cobranca().banco()));
+        banco.retomar(fabrica.multas());
     }
 
     /** Perfil, banco e recursos ligados, para a tela "Sobre a instalação". */

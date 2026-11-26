@@ -156,6 +156,41 @@ class R08MySqlIntegracaoTest {
         assertThatThrownBy(relido::reservar).hasMessageContaining("RESERVADO");   // comportamento do estado voltou
     }
 
+    /**
+     * D-13, como a CLI/web sobem: depois de reiniciar sem apagar os dados, (1) um pagamento novo não é tomado por
+     * notificação repetida — o evento EVT-A-1 da execução anterior já está em {@code notificacao_processada} — e
+     * (2) o boleto emitido antes do reinício, ainda em aberto, continua pagável.
+     */
+    @Test
+    void R08_mysqlBancoSimuladoRetomaBoletosEEventosAposReinicio() {
+        long outroLivro = LIVRO + 1;
+        app.tratadorDeAcervo().inserirLivro(outroLivro, "Refatoração", null);
+        app.tratadorDeEmprestimo().solicitarReserva(SolicitacaoDeReserva.nova("ana", relogio, LIVRO, ana));
+        app.tratadorDeEmprestimo().solicitarReserva(SolicitacaoDeReserva.nova("ana", relogio, outroLivro, ana));
+        long emprestimoPago = app.tratadorDeEmprestimo().realizarEmprestimo(LIVRO, ana, bruno).idEmprestimo();
+        long emprestimoEmAberto = app.tratadorDeEmprestimo().realizarEmprestimo(outroLivro, ana, bruno).idEmprestimo();
+        relogio.avancarDias(35);                                         // 5 dias de atraso nos dois
+        app.tratadorDeDevolucao().registrarDevolucao(LIVRO, ana, bruno);
+        app.tratadorDeDevolucao().registrarDevolucao(outroLivro, ana, bruno);
+        Multa paga = app.servicoDeMultas().multaDoEmprestimo(emprestimoPago).orElseThrow();
+        assertThat(app.servicoDeMultas().registrarPagamento(
+                app.simuladorDePagamento().pagar(paga.getBoleto().orElseThrow().getIdentificadorNoBanco())))
+                .isEqualTo(ResultadoDaNotificacao.MULTA_QUITADA);              // grava o evento EVT-A-1
+
+        Aplicacao reiniciada = novaAplicacao();
+        reiniciada.prepararParaUso(false);                               // como o Main faz ao subir
+        Multa emAberto = reiniciada.servicoDeMultas().multaDoEmprestimo(emprestimoEmAberto).orElseThrow();
+        String notificacao = reiniciada.simuladorDePagamento()
+                .pagar(emAberto.getBoleto().orElseThrow().getIdentificadorNoBanco());
+
+        assertThat(notificacao).doesNotContain("EVT-A-1;");
+        assertThat(reiniciada.servicoDeMultas().registrarPagamento(notificacao))
+                .isEqualTo(ResultadoDaNotificacao.MULTA_QUITADA);
+        Multa relida = novaAplicacao().servicoDeMultas().multaDoEmprestimo(emprestimoEmAberto).orElseThrow();
+        assertThat(relida.getEstado()).isEqualTo(EstadoMulta.QUITADA);
+        assertThat(relida.getBoleto().orElseThrow().getSituacao()).isEqualTo(SituacaoBoleto.PAGO);
+    }
+
     // ---------------------------------------------------------------------------------------------
 
     private Aplicacao novaAplicacao() {

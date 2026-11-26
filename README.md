@@ -67,7 +67,8 @@ demonstração; depois da última linha, a CLI volta para o teclado. O mesmo rot
 
 Ficam só em memória (recomeçam a cada execução): a fila de pendências de inspeção, os indicadores de devolução, o
 registro de solicitações já executadas (R6), a organização do acervo (recriada com os livros de exemplo) e os bancos
-simulados (que continuam a numeração dos boletos já gravados).
+simulados (que, ao subir, retomam o que está gravado: continuam a numeração dos boletos e dos eventos de pagamento
+e voltam a aceitar o pagamento dos boletos ainda em aberto — D-12, D-13).
 
 ## Configuração
 Valores padrão em [src/main/resources/application.properties](src/main/resources/application.properties); qualquer chave

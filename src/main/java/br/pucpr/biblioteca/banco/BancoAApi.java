@@ -39,6 +39,25 @@ public class BancoAApi {
         proximoCodigo.accumulateAndGet(ultimoCodigoUsado + 1, Math::max);
     }
 
+    /**
+     * O mesmo para os eventos de pagamento ({@code EVT-A-n}): o cliente guarda os eventos que já processou, e um
+     * evento novo com um número já usado seria tomado por notificação repetida. Ao subir, a aplicação informa o maior
+     * número de evento já recebido (D-13).
+     */
+    public void continuarEventosApos(long ultimoEventoUsado) {
+        proximoEvento.accumulateAndGet(ultimoEventoUsado + 1, Math::max);
+    }
+
+    /**
+     * Um banco real guarda os títulos em aberto entre uma execução e outra do cliente; o simulador, que vive só na
+     * memória, os recebe de volta ao subir para que continuem pagáveis (D-13). O CPF não é guardado pelo cliente e
+     * não é necessário para pagar.
+     */
+    public synchronized void restaurarTitulo(long codigo, long nossoNumero, long valorEmCentavos) {
+        titulos.putIfAbsent(codigo, new Titulo(codigo, nossoNumero, valorEmCentavos, null, STATUS_REGISTRADO));
+        continuarNumeracaoApos(codigo);
+    }
+
     /** Registra um título de cobrança. */
     public synchronized long registrarTitulo(long nossoNumero, long valorEmCentavos, String cpfSomenteDigitos) {
         if (valorEmCentavos <= 0) {
