@@ -58,7 +58,8 @@ public class AdaptadorBancoB implements ServicoDeCobranca {
 
     // ---- conversões ----
 
-    static String paraTextoComVirgula(BigDecimal reais) {
+    /** Também usada pelo simulador ao restaurar boletos (D-13): o formato do Banco B fica definido só aqui. */
+    public static String paraTextoComVirgula(BigDecimal reais) {
         return reais.setScale(2).toPlainString().replace('.', ',');   // 7.00 → "7,00"
     }
 

@@ -2,6 +2,7 @@ package br.pucpr.biblioteca.persistencia.memoria;
 
 import br.pucpr.biblioteca.financeiro.Multa;
 import br.pucpr.biblioteca.financeiro.RepositorioDeMultas;
+import br.pucpr.biblioteca.financeiro.SituacaoBoleto;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,6 +56,24 @@ public class RepositorioDeMultasEmMemoria implements RepositorioDeMultas {
                 .flatMap(m -> m.getBoleto().stream())
                 .filter(b -> b.getBanco().equals(banco))
                 .map(b -> b.getIdentificadorNoBanco())
+                .toList();
+    }
+
+    @Override
+    public synchronized List<String> identificadoresDeNotificacao(String banco) {
+        String prefixo = banco + ":";
+        return notificacoesProcessadas.stream()
+                .filter(chave -> chave.startsWith(prefixo))
+                .map(chave -> chave.substring(prefixo.length()))
+                .toList();
+    }
+
+    @Override
+    public synchronized List<Multa> listarComBoletoEmAberto(String banco) {
+        return multas.values().stream()
+                .filter(m -> m.getBoleto().isPresent())
+                .filter(m -> m.getBoleto().get().getBanco().equals(banco)
+                        && m.getBoleto().get().getSituacao() == SituacaoBoleto.EMITIDO)
                 .toList();
     }
 

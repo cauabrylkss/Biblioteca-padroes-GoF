@@ -65,7 +65,8 @@ public class AdaptadorBancoA implements ServicoDeCobranca {
 
     // ---- conversões ----
 
-    static long paraCentavos(BigDecimal reais) {
+    /** Também usada pelo simulador ao restaurar títulos (D-13): o formato do Banco A fica definido só aqui. */
+    public static long paraCentavos(BigDecimal reais) {
         return reais.movePointRight(2).longValueExact();   // 7.00 → 700
     }
 

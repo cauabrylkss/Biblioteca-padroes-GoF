@@ -129,6 +129,41 @@ public final class RepositorioDeMultasJdbc implements RepositorioDeMultas {
         });
     }
 
+    @Override
+    public List<String> identificadoresDeNotificacao(String banco) {
+        return unidade.executar(c -> {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT id_notificacao FROM notificacao_processada WHERE banco = ?")) {
+                ps.setString(1, banco);
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<String> ids = new ArrayList<>();
+                    while (rs.next()) {
+                        ids.add(rs.getString(1));
+                    }
+                    return ids;
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<Multa> listarComBoletoEmAberto(String banco) {
+        return unidade.executar(c -> {
+            try (PreparedStatement ps = c.prepareStatement(
+                    COLUNAS + " WHERE boleto_banco = ? AND boleto_situacao = ? ORDER BY id")) {
+                ps.setString(1, banco);
+                ps.setString(2, SituacaoBoleto.EMITIDO.name());
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<Multa> multas = new ArrayList<>();
+                    while (rs.next()) {
+                        multas.add(paraMulta(rs));
+                    }
+                    return multas;
+                }
+            }
+        });
+    }
+
     /** {@code INSERT IGNORE}: se a chave (banco, id) já existe, nenhuma linha é inserida → já processada. */
     @Override
     public boolean registrarNotificacaoProcessada(String banco, String idNotificacao) {

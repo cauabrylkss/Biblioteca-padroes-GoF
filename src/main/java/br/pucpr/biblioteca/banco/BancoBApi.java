@@ -37,6 +37,20 @@ public class BancoBApi {
         proximoId.accumulateAndGet(ultimoNumeroUsado + 1, Math::max);
     }
 
+    /** Continua a numeração dos eventos ({@code ev-b-n}) depois do maior já recebido pelo cliente (D-13). */
+    public void continuarEventosApos(long ultimoEventoUsado) {
+        proximoEvento.accumulateAndGet(ultimoEventoUsado + 1, Math::max);
+    }
+
+    /**
+     * Recebe de volta um boleto ainda em aberto, que um banco real teria guardado entre as execuções do cliente
+     * (ver {@code BancoAApi.restaurarTitulo}, D-13). O CPF não é guardado pelo cliente e não é necessário para pagar.
+     */
+    public synchronized void restaurarBoleto(String id, String referencia, String valorReais) {
+        boletos.putIfAbsent(id, new BoletoB(id, referencia, valorReais, null, ABERTO));
+        continuarNumeracaoApos(Long.parseLong(id.replaceAll("[^0-9]", "")));
+    }
+
     /** Cria um boleto. */
     public synchronized String criarBoleto(String referencia, String valorReais, String documentoPagador) {
         if (valorReais == null || !valorReais.matches("\\d+,\\d{2}")) {

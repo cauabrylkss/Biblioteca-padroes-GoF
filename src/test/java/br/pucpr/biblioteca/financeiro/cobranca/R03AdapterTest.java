@@ -12,6 +12,7 @@ import br.pucpr.biblioteca.financeiro.ConsultaDePagador;
 import br.pucpr.biblioteca.financeiro.EstadoMulta;
 import br.pucpr.biblioteca.financeiro.Multa;
 import br.pucpr.biblioteca.financeiro.PoliticaOriginal;
+import br.pucpr.biblioteca.financeiro.RepositorioDeMultas;
 import br.pucpr.biblioteca.financeiro.ResultadoDaNotificacao;
 import br.pucpr.biblioteca.financeiro.ServicoDeMultas;
 import br.pucpr.biblioteca.financeiro.SituacaoBoleto;
@@ -43,9 +44,13 @@ class R03AdapterTest {
 
     /** Monta o serviço de multas exatamente igual para qualquer banco: só o adaptador muda. */
     private static ServicoDeMultas servicoCom(ServicoDeCobranca cobranca) {
+        return servicoCom(cobranca, new RepositorioDeMultasEmMemoria());
+    }
+
+    private static ServicoDeMultas servicoCom(ServicoDeCobranca cobranca, RepositorioDeMultas multas) {
         ConfiguracaoAdministrativa configuracao =
                 new ConfiguracaoAdministrativa(List.of(new PoliticaOriginal()), PoliticaOriginal.CODIGO);
-        return new ServicoDeMultas(configuracao, new RepositorioDeMultasEmMemoria(), cobranca, ANA);
+        return new ServicoDeMultas(configuracao, multas, cobranca, ANA);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -242,5 +247,58 @@ class R03AdapterTest {
         BancoConfigurado semHistorico = BancoDaInstalacao.criar("A");
         semHistorico.simulador().continuarNumeracaoApos(List.of());
         assertThat(semHistorico.cobranca().registrar(cobranca).identificadorNoBanco()).isEqualTo("1001");
+    }
+
+    /**
+     * D-13: o banco simulado vive só na memória. "Reiniciar" = um banco simulado e um serviço novos sobre as mesmas
+     * multas gravadas, como faz {@code Aplicacao.prepararParaUso}. Sem a retomada, o evento do pagamento novo
+     * recebia de novo o número 1 (já processado) e era ignorado como notificação repetida.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"A", "B"})
+    void R03_aposReiniciarPagamentoNovoNaoEhConfundidoComNotificacaoRepetida(String banco) {
+        RepositorioDeMultas multasGravadas = new RepositorioDeMultasEmMemoria();
+        BancoConfigurado antes = BancoDaInstalacao.criar(banco);
+        ServicoDeMultas servicoAntes = servicoCom(antes.cobranca(), multasGravadas);
+        Multa primeira = servicoAntes.emitirSeHouverAtraso(1, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        servicoAntes.registrarPagamento(antes.simulador().pagar(primeira.getBoleto().orElseThrow().getIdentificadorNoBanco()));
+
+        BancoConfigurado depois = BancoDaInstalacao.criar(banco);
+        depois.retomar(multasGravadas);
+        ServicoDeMultas servicoDepois = servicoCom(depois.cobranca(), multasGravadas);
+        Multa nova = servicoDepois.emitirSeHouverAtraso(2, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        String notificacao = depois.simulador().pagar(nova.getBoleto().orElseThrow().getIdentificadorNoBanco());
+
+        assertThat(servicoDepois.registrarPagamento(notificacao)).isEqualTo(ResultadoDaNotificacao.MULTA_QUITADA);
+        assertThat(nova.getEstado()).isEqualTo(EstadoMulta.QUITADA);
+        assertThat(nova.getBoleto().orElseThrow().getIdentificadorNoBanco())
+                .as("numeração dos boletos continua (D-12)")
+                .isNotEqualTo(primeira.getBoleto().orElseThrow().getIdentificadorNoBanco());
+    }
+
+    /** D-13: boleto emitido antes do reinício e ainda em aberto continua pagável depois dele. */
+    @ParameterizedTest
+    @ValueSource(strings = {"A", "B"})
+    void R03_boletoEmAbertoEmitidoAntesDoReinicioContinuaPagavel(String banco) {
+        RepositorioDeMultas multasGravadas = new RepositorioDeMultasEmMemoria();
+        BancoConfigurado antes = BancoDaInstalacao.criar(banco);
+        Multa emAberto = servicoCom(antes.cobranca(), multasGravadas)
+                .emitirSeHouverAtraso(1, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        String idBoleto = emAberto.getBoleto().orElseThrow().getIdentificadorNoBanco();
+
+        BancoConfigurado depois = BancoDaInstalacao.criar(banco);
+        assertThatThrownBy(() -> depois.simulador().pagar(idBoleto))
+                .as("sem retomar, o banco simulado não conhece o boleto").isInstanceOf(IllegalArgumentException.class);
+        depois.retomar(multasGravadas);
+        ServicoDeMultas servicoDepois = servicoCom(depois.cobranca(), multasGravadas);
+        String notificacao = depois.simulador().pagar(idBoleto);
+
+        assertThat(servicoDepois.registrarPagamento(notificacao)).isEqualTo(ResultadoDaNotificacao.MULTA_QUITADA);
+        assertThat(multasGravadas.buscarPorId(emAberto.getId()).orElseThrow().getEstado()).isEqualTo(EstadoMulta.QUITADA);
+        assertThat(servicoDepois.registrarPagamento(notificacao))
+                .as("quitação continua idempotente").isEqualTo(ResultadoDaNotificacao.IGNORADA_JA_PROCESSADA);
+        Multa nova = servicoDepois.emitirSeHouverAtraso(2, ESTUDANTE, VENCIMENTO, SETE_DIAS_DEPOIS).orElseThrow();
+        assertThat(nova.getBoleto().orElseThrow().getIdentificadorNoBanco())
+                .as("boleto restaurado não é reemitido com outro número").isNotEqualTo(idBoleto);
     }
 }

@@ -58,5 +58,10 @@ O método é `synchronized`, então duas notificações simultâneas não passam
   adaptador é quem sabe ler.
 - **E se o banco mandar uma notificação "em aberto" ou "cancelado"?** É traduzida para `EM_ABERTO`/`CANCELADO` e o
   serviço devolve `IGNORADA_SEM_PAGAMENTO` sem alterar nada.
+- **E se a aplicação for reiniciada?** Os bancos são simulados em memória, mas as multas e as notificações já
+  processadas ficam no MySQL. Ao subir, `BancoConfigurado.retomar` faz o simulador lembrar o que um banco real
+  lembraria: continua a numeração dos boletos e dos eventos de pagamento e volta a conhecer os boletos em aberto
+  (D-12, D-13). Sem isso, um pagamento novo recebia o número de um evento já processado e era ignorado como repetido.
+  O `ServicoDeMultas` e os adaptadores não mudaram; a conversão de formato usada na restauração é a dos adaptadores.
 - **Alteração ao vivo provável: "adicione o banco C".** Nova API simulada em `banco`, novo `AdaptadorBancoC` em
   `financeiro.cobranca` e um `case "C"` em `BancoDaInstalacao`. `ServicoDeMultas` não muda.
