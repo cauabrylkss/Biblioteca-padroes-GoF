@@ -6,6 +6,14 @@ diagramas ou com o código-alvo · 🟡 qualidade/legibilidade.
 > Regra geral: o critério "coerência código × UML" vale 15%. **Corrigir os diagramas para refletir o código que será
 > escrito** (padrões GoF incluídos), não o contrário. Os diagramas são entregues em `.asta` **e PDF**.
 
+> **Interface web (25/11, branch `web/interface-web`, D-01 revista):** com a web como interface padrão, o código passou
+> a corresponder ao componente **"Interface Web"** do diagrama de componentes (requer `iLivro`, `iEmprestimo`,
+> `iDevolucao`, `iAtendente`, `iEstudante`, `iPessoa` — e também `iAdministracao`, que não está desenhada) e ao nó
+> `Computador do Usuário [WebBrowser: index.html]` da implantação. **Divergências que restam** (diagramas não serão
+> editados, A-09): o servidor de aplicação é o `HttpServer` do JDK embutido em `biblioteca.jar` (não Tomcat/`.war`,
+> ver I3), roda em `localhost` por **HTTP** (o diagrama diz HTTPS) e a CLI continua existindo como reserva
+> (`--interface=cli`), sem componente próprio no diagrama.
+
 ---
 
 ## 1. Máquina de estados de Livro (`DiagramaDeEstados05`)

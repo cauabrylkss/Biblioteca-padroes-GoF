@@ -22,29 +22,42 @@ mvnw.cmd test        # PowerShell / cmd
 Roda todos os cenários de verificação `R01_…` a `R10_…` no perfil em memória, sem configuração adicional.
 Testes de integração com MySQL real (marcados `@Tag("mysql")`) só rodam com `./mvnw test -Pmysql`.
 
-## Executar a interface (CLI)
+## Executar a interface (web)
 ```bash
 ./mvnw package                                   # gera target/biblioteca.jar (também roda os testes)
-java -jar target/biblioteca.jar                  # perfil de produção (MySQL) — padrão
+java -jar target/biblioteca.jar                  # interface web + perfil de produção (MySQL) — padrão
 java -jar target/biblioteca.jar --reiniciar-dados   # apaga os dados do MySQL e recria os de exemplo
 java -jar target/biblioteca.jar --perfil=memoria    # sem banco (plano B): dados só nesta execução
+java -jar target/biblioteca.jar --porta=8081 --sem-navegador
 java -jar target/biblioteca.jar --ajuda
 ```
-Atalho sem empacotar: `./mvnw compile exec:java -Dexec.args="--perfil=memoria"`.
+O programa sobe um servidor HTTP em **http://localhost:8080** (o `HttpServer` que já vem no JDK — sem Spring nem
+Tomcat) e abre o navegador. **Ctrl+C** no terminal encerra. Atalho sem empacotar:
+`./mvnw compile exec:java -Dexec.args="--perfil=memoria"`.
 
-A CLI pergunta **"operar como"** (Estudante, Atendente, Administrador ou Ferramentas da demonstração) — não há login.
+A página pergunta **"operar como"** (Estudante, Atendente, Administrador ou Ferramentas da demonstração) — não há
+login. Cada formulário chama **uma operação de um tratador**: `POST /api/iEmprestimo/solicitarReserva`,
+`POST /api/iDevolucao/registrarDevolucao`, `GET /api/iLivro/consultarAcervo`… (o caminho aparece no histórico). A
+página não tem regra de domínio: mostra **OK**, **Recusado** (HTTP 409, o livro não muda) ou **Erro**, e o painel
+**Acervo agora** mostra a situação de cada livro, relida do repositório depois de cada operação.
+
 Com o banco vazio são cadastrados dados de exemplo: estudantes **Ana (1)** e **Carla (2)**, atendente **Bruno (1)**,
 livros **1 a 5** organizados em unidade/seções/subseção. As ferramentas da demonstração avançam o relógio (para
 simular atraso), simulam o pagamento de um boleto no banco e mostram a caixa de saída de e-mails.
 
-### Roteiro da demonstração
-[docs/demo/roteiro-demo.txt](docs/demo/roteiro-demo.txt) responde as perguntas da CLI na ordem do fluxo pedido no
-enunciado: **reserva → empréstimo → renovação → devolução atrasada → multa** (+ inspeção, pagamento do boleto e
-quitação). Depois da última linha, a CLI volta para o teclado.
+O fluxo da demonstração pela web (**reserva → empréstimo → renovação → devolução atrasada → multa** + inspeção e
+pagamento do boleto) está em [docs/demo/APRESENTACAO.md](docs/demo/APRESENTACAO.md) e é executado por HTTP pelo
+teste `InterfaceWebTest` (perfil em memória).
+
+### CLI (reserva)
+A interface de linha de comando continua disponível, com os mesmos tratadores e as mesmas mensagens:
 ```bash
-java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt
+java -jar target/biblioteca.jar --interface=cli
+java -jar target/biblioteca.jar --reiniciar-dados --roteiro=docs/demo/roteiro-demo.txt   # --roteiro já escolhe a CLI
 ```
-O mesmo roteiro é executado pelo teste `InterfaceCliTest` (perfil em memória).
+[docs/demo/roteiro-demo.txt](docs/demo/roteiro-demo.txt) responde as perguntas da CLI na ordem do fluxo da
+demonstração; depois da última linha, a CLI volta para o teclado. O mesmo roteiro é executado pelo teste
+`InterfaceCliTest`.
 
 ## Perfil de produção (MySQL)
 1. No MySQL Workbench, execute uma vez [docs/mysql/criar-banco.sql](docs/mysql/criar-banco.sql), trocando a senha.
@@ -81,7 +94,8 @@ Classes por papel e teste de cada cenário: [docs/RASTREABILIDADE.md](docs/RASTR
 src/main/java/br/pucpr/biblioteca/
   biblioteca/   livro (State) · acervo (Decorator, Composite) · movimentacao · circulacao (Facade, Observer, Command) · tratadores
   rh/  academico/  cadastro (Template Method)  financeiro (Strategy) · financeiro/cobranca (Adapter)  banco (bancos simulados)
-  persistencia/ (Abstract Factory) · memoria · jdbc     interfaceusuario/ (CLI)     config/ (composition root)
+  persistencia/ (Abstract Factory) · memoria · jdbc     interfaceusuario/ (web · CLI)     config/ (composition root)
+src/main/resources/web/   index.html · app.js · estilo.css (página da interface web)
 docs/
   *.asta                 modelos UML (Astah)        diagramas/  exportações
   contexto/              enunciado, revisão da UML, arquitetura, plano e decisões
@@ -106,5 +120,6 @@ estão em [docs/contexto/03-revisao-uml.md](docs/contexto/03-revisao-uml.md).
 | Claude Code (Claude Opus 5.5) | R7 Template Method, R4 Facade, R5 Observer, R6 Command e R8 (memória): cadastros, fachada de circulação, ouvintes da devolução, solicitações e persistência em memória, com os testes `R04`–`R08` e os guias `docs/estudo/`. |
 | Claude Code (Claude Opus 5.5) | R8 relacional: pacote `persistencia.jdbc` (MySQL), `schema.sql`, `R08MySqlIntegracaoTest`. R9 Decorator: consulta ao acervo com medição e cache, `R09DecoratorTest`. |
 | Claude Code (Claude Opus 5.5) | Interface CLI (`interfaceusuario`), `iAdministracao`, dados de exemplo, roteiro da demonstração, e-mails de boleto/quitação e numeração do banco simulado; `InterfaceCliTest`. |
+| Claude Code (Claude Opus 5.5) | Interface web (`interfaceusuario.web`: `ServidorWeb`, `InterfaceWeb`, `Json`, `Requisicao`; página `src/main/resources/web/`), textos compartilhados com a CLI (`interfaceusuario.Mensagens`), opções `--interface`/`--porta`; `InterfaceWebTest`. |
 
 Pedidos feitos e o que a equipe aceitou, corrigiu ou descartou: [REGISTRO_LLM.md](REGISTRO_LLM.md).

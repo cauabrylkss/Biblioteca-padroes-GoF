@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Biblioteca — padrões GoF</title>
+  <link rel="stylesheet" href="estilo.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+<!--
+  Interface web do Sistema de Biblioteca (PUCPR).
+  Cada formulário chama UMA operação de um tratador: data-rota="iEmprestimo/solicitarReserva" → /api/iEmprestimo/solicitarReserva.
+  data-metodo: GET (consulta) ou POST (altera). data-com: id do ator ("operar como") enviado junto.
+  A página não tem regra de domínio: envia os campos, mostra as mensagens devolvidas e recarrega o acervo.
+-->
+<header class="topo">
+  <div>
+    <h1>Sistema de Biblioteca</h1>
+    <p class="subtitulo">Padrões GoF — PUCPR</p>
+  </div>
+  <div class="hoje">Hoje: <strong id="hoje">-</strong></div>
+  <p class="instalacao" id="instalacao">Carregando…</p>
+</header>
+
+<main class="grade">
+  <section class="painel operacao">
+    <nav class="atores" aria-label="Operar como">
+      <span class="rotulo">Operar como</span>
+      <button type="button" data-ator="estudante" class="ativo">Estudante</button>
+      <button type="button" data-ator="atendente">Atendente</button>
+      <button type="button" data-ator="administrador">Administrador</button>
+      <button type="button" data-ator="ferramentas">Ferramentas da demonstração</button>
+    </nav>
+
+    <!-- ================================ Estudante ================================ -->
+    <div class="ator" id="ator-estudante">
+      <form class="entrar" data-entrar="estudante">
+        <label>Id do estudante <input name="id" type="number" min="1" value="1" required></label>
+        <button>Entrar</button>
+        <span class="quem" id="quem-estudante">Ninguém</span>
+      </form>
+      <div class="operacoes" data-precisa="estudante">
+        <form data-metodo="GET" data-rota="iLivro/buscarPorTitulo" data-titulo="Buscar livros por título">
+          <h3>Buscar livros por título</h3>
+          <label>Trecho do título <input name="trecho" required></label>
+          <button>Buscar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iLivro/consultarLivro" data-titulo="Consultar livro">
+          <h3>Consultar livro <small>situação atual</small></h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iEmprestimo/solicitarReserva" data-com="idEstudante" data-titulo="Solicitar reserva">
+          <h3>Solicitar reserva</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button class="principal">Reservar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iEmprestimo/consultarReservaLivro" data-com="idEstudante" data-titulo="Consultar minha reserva">
+          <h3>Consultar minha reserva</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iEmprestimo/renovarEmprestimo" data-com="idEstudante" data-titulo="Renovar empréstimo">
+          <h3>Renovar empréstimo</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button class="principal">Renovar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iEmprestimo/consultarEmprestimo" data-com="idEstudante" data-titulo="Consultar meu empréstimo">
+          <h3>Consultar meu empréstimo</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/multasDoEstudante" data-com="idEstudante" data-titulo="Minhas multas">
+          <h3>Minhas multas</h3>
+          <button>Ver multas</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================================ Atendente ================================ -->
+    <div class="ator" id="ator-atendente" hidden>
+      <form class="entrar" data-entrar="atendente">
+        <label>Id do atendente <input name="id" type="number" min="1" value="1" required></label>
+        <button>Entrar</button>
+        <span class="quem" id="quem-atendente">Ninguém</span>
+      </form>
+      <div class="operacoes" data-precisa="atendente">
+        <form data-metodo="POST" data-rota="iEmprestimo/realizarEmprestimo" data-com="idAtendente" data-titulo="Realizar empréstimo">
+          <h3>Realizar empréstimo</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button class="principal">Emprestar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iDevolucao/registrarDevolucao" data-com="idAtendente" data-titulo="Registrar devolução">
+          <h3>Registrar devolução</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button class="principal">Registrar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iDevolucao/inspecionarLivro" data-titulo="Inspecionar livro devolvido">
+          <h3>Inspecionar livro devolvido</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Livro em bom estado?
+            <select name="emBomEstado"><option value="true">Sim</option><option value="false">Não</option></select>
+          </label>
+          <button class="principal">Inspecionar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iDevolucao/consultarPendenciasDeInspecao" data-titulo="Pendências de inspeção">
+          <h3>Pendências de inspeção</h3>
+          <button>Ver pendências</button>
+        </form>
+        <form data-metodo="POST" data-titulo="Reparo" class="largo">
+          <h3>Reparo <small>REPARANDO → INCINERADO só pelo laudo</small></h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <div class="botoes">
+            <button data-rota="iDevolucao/enviarParaReparo">Enviar para reparo</button>
+            <button data-rota="iDevolucao/retornarDoReparo">Retornar do reparo</button>
+            <button data-rota="iDevolucao/registrarLaudoIrrecuperavel" class="perigo">Laudo irrecuperável</button>
+          </div>
+        </form>
+        <form data-metodo="GET" data-rota="iDevolucao/emitirBoletoDeMulta" data-titulo="Multa/boleto de uma devolução">
+          <h3>Multa/boleto de uma devolução</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iLivro/consultarLivro" data-titulo="Consultar livro">
+          <h3>Consultar livro <small>situação atual</small></h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ============================== Administrador ============================== -->
+    <div class="ator" id="ator-administrador" hidden>
+      <h2>Acervo <small>R7 cadastro · R10 organização</small></h2>
+      <div class="operacoes">
+        <form data-metodo="POST" data-rota="iLivro/inserirLivro" data-titulo="Cadastrar livro">
+          <h3>Cadastrar livro</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Título <input name="titulo" required></label>
+          <label>Id do grupo <input name="idGrupo" type="number" min="1" placeholder="em branco = não catalogar"></label>
+          <button class="principal">Cadastrar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iLivro/atualizarLivro" data-titulo="Alterar título">
+          <h3>Alterar título</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Novo título <input name="titulo" required></label>
+          <button>Alterar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iLivro/excluirLivro" data-titulo="Excluir livro">
+          <h3>Excluir livro <small>só se LIVRE</small></h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <button class="perigo">Excluir</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/gruposDoAcervo" data-titulo="Organização do acervo">
+          <h3>Organização do acervo</h3>
+          <button>Ver árvore</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAdministracao/moverLivro" data-titulo="Mover livro para outro grupo">
+          <h3>Mover livro para outro grupo</h3>
+          <label>Id do livro <input name="idLivro" type="number" min="1" required></label>
+          <label>Id do grupo de destino <input name="idGrupo" type="number" min="1" required></label>
+          <button>Mover</button>
+        </form>
+      </div>
+
+      <h2>Pessoas, estudantes e atendentes <small>R7</small></h2>
+      <div class="operacoes">
+        <form data-metodo="GET" data-rota="iPessoa/consultarPessoas" data-titulo="Listar pessoas">
+          <h3>Listar pessoas</h3>
+          <button>Listar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iPessoa/inserirPessoa" data-titulo="Cadastrar pessoa">
+          <h3>Cadastrar pessoa</h3>
+          <label>Nome <input name="nome" required></label>
+          <label>Sobrenome <input name="sobrenome" required></label>
+          <label>CPF <input name="cpf" required></label>
+          <button class="principal">Cadastrar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iPessoa/atualizarPessoa" data-titulo="Alterar nome de pessoa">
+          <h3>Alterar nome de pessoa</h3>
+          <label>Id da pessoa <input name="idPessoa" type="number" min="1" required></label>
+          <label>Nome <input name="nome" required></label>
+          <label>Sobrenome <input name="sobrenome" required></label>
+          <button>Alterar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iPessoa/excluirPessoa" data-titulo="Excluir pessoa">
+          <h3>Excluir pessoa</h3>
+          <label>Id da pessoa <input name="idPessoa" type="number" min="1" required></label>
+          <button class="perigo">Excluir</button>
+        </form>
+        <form data-metodo="POST" data-rota="iEstudante/inserirEstudante" data-titulo="Tornar estudante">
+          <h3>Tornar estudante <small>pelo CPF</small></h3>
+          <label>CPF <input name="cpf" required></label>
+          <button>Tornar estudante</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAtendente/inserirAtendente" data-titulo="Tornar atendente">
+          <h3>Tornar atendente <small>pelo CPF</small></h3>
+          <label>CPF <input name="cpf" required></label>
+          <button>Tornar atendente</button>
+        </form>
+        <form data-metodo="GET" data-rota="iEstudante/consultarEstudante" data-titulo="Consultar estudante">
+          <h3>Consultar estudante</h3>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAtendente/consultarAtendente" data-titulo="Consultar atendente">
+          <h3>Consultar atendente</h3>
+          <label>Id do atendente <input name="idAtendente" type="number" min="1" required></label>
+          <button>Consultar</button>
+        </form>
+        <form data-metodo="POST" data-rota="iEstudante/excluirEstudante" data-titulo="Excluir estudante">
+          <h3>Excluir estudante</h3>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button class="perigo">Excluir</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAtendente/excluirAtendente" data-titulo="Excluir atendente">
+          <h3>Excluir atendente</h3>
+          <label>Id do atendente <input name="idAtendente" type="number" min="1" required></label>
+          <button class="perigo">Excluir</button>
+        </form>
+      </div>
+
+      <h2>Multas e indicadores <small>R2 · R9 · R5</small></h2>
+      <div class="operacoes">
+        <form data-metodo="GET" data-rota="iAdministracao/politicasDeMulta" data-titulo="Políticas de multa">
+          <h3>Políticas de multa <small>* = vigente</small></h3>
+          <button>Ver políticas</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAdministracao/definirPoliticaDeMulta" data-titulo="Trocar política de multa">
+          <h3>Trocar política de multa</h3>
+          <label>Código <input name="codigo" required placeholder="original, teto, tolerancia"></label>
+          <button class="principal">Trocar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/medicoesDaConsulta" data-titulo="Medições da consulta ao acervo (R9)">
+          <h3>Medições da consulta ao acervo <small>R9</small></h3>
+          <button>Ver medições</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/indicadores" data-titulo="Indicadores de devolução (R5)">
+          <h3>Indicadores de devolução <small>R5</small></h3>
+          <button>Ver indicadores</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================= Ferramentas da demonstração ========================= -->
+    <div class="ator" id="ator-ferramentas" hidden>
+      <p class="nota">Simulam o que fica fora do sistema: o tempo passando, o banco pagando o boleto e o servidor de e-mail.</p>
+      <div class="operacoes">
+        <form data-metodo="POST" data-rota="iAdministracao/avancarDias" data-titulo="Avançar o relógio">
+          <h3>Avançar o relógio</h3>
+          <label>Quantos dias <input name="dias" type="number" min="1" required></label>
+          <button class="principal">Avançar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/multasDoEstudante" data-titulo="Multas de um estudante">
+          <h3>Multas de um estudante</h3>
+          <label>Id do estudante <input name="idEstudante" type="number" min="1" required></label>
+          <button>Ver multas</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAdministracao/simularPagamento" data-titulo="Simular pagamento de boleto (R3)">
+          <h3>Simular pagamento de boleto <small>banco → Financeiro (R3)</small></h3>
+          <label>Identificador do boleto <input name="boleto" required></label>
+          <button class="principal">Banco pagou</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/emailsEnviados" data-titulo="Caixa de saída de e-mails">
+          <h3>Caixa de saída de e-mails</h3>
+          <button>Ver e-mails</button>
+        </form>
+        <form data-metodo="POST" data-rota="iAdministracao/definirFalhaDoEmail" data-titulo="Falha do e-mail (R5)">
+          <h3>Falha do e-mail <small>R5: os outros ouvintes continuam</small></h3>
+          <label>Servidor de e-mail fora do ar?
+            <select name="falhar"><option value="false">Não</option><option value="true">Sim</option></select>
+          </label>
+          <button>Aplicar</button>
+        </form>
+        <form data-metodo="GET" data-rota="iAdministracao/descricaoDaInstalacao" data-titulo="Sobre a instalação">
+          <h3>Sobre a instalação</h3>
+          <button>Ver</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <aside class="lateral">
+    <section class="painel">
+      <h2>Acervo agora <small>situação lida do repositório a cada operação</small></h2>
+      <table class="acervo">
+        <thead><tr><th>Id</th><th>Título</th><th>Situação</th><th>Grupo</th></tr></thead>
+        <tbody id="acervo"><tr><td colspan="4">Carregando…</td></tr></tbody>
+      </table>
+    </section>
+    <section class="painel">
+      <div class="cabecalho-historico">
+        <h2>Histórico</h2>
+        <button type="button" id="limpar" class="discreto">Limpar</button>
+      </div>
+      <ol class="historico" id="historico"></ol>
+    </section>
+  </aside>
+</main>
+</body>
+</html>
